@@ -30,7 +30,9 @@ export type {
   MulUnit,
   NoInfer,
   Quantity,
+  SqrtUnit,
   UnitExpr,
+  UnitFromString,
   UnitTag,
 } from './src/units.ts';
 

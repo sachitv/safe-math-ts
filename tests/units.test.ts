@@ -24,15 +24,18 @@ import {
   unit,
   valueOf,
 } from '../mod.ts';
-import type { Quantity } from '../mod.ts';
+import type { Quantity, UnitExpr, UnitFromString } from '../mod.ts';
 import {
   assert,
   assertAlmostEquals,
   assertEquals,
+  assertSameUnitType,
   assertThrows,
 } from './assert.test.ts';
 
-const assertUnit = <Unit extends string>(
+type U<Expr extends string> = UnitFromString<Expr>;
+
+const assertUnit = <Unit extends UnitExpr>(
   _value: Quantity<Unit>,
 ): void => {
   // Compile-time only assertion that the quantity carries Unit.
@@ -51,13 +54,13 @@ Deno.test('units arithmetic and comparisons', () => {
   const maximum = max(a, b);
   const scaled = scale(a, 2);
 
-  assertUnit<'m'>(added);
-  assertUnit<'m'>(subtracted);
-  assertUnit<'m'>(negated);
-  assertUnit<'m'>(absolute);
-  assertUnit<'m'>(minimum);
-  assertUnit<'m'>(maximum);
-  assertUnit<'m'>(scaled);
+  assertUnit<U<'m'>>(added);
+  assertUnit<U<'m'>>(subtracted);
+  assertUnit<U<'m'>>(negated);
+  assertUnit<U<'m'>>(absolute);
+  assertUnit<U<'m'>>(minimum);
+  assertUnit<U<'m'>>(maximum);
+  assertUnit<U<'m'>>(scaled);
 
   assertEquals(valueOf(added), 7);
   assertEquals(valueOf(subtracted), 3);
@@ -87,10 +90,11 @@ Deno.test('units multiplication division and sqrt', () => {
   const velocity = div(meters, seconds);
   const accelerationComposed = div(velocity, seconds);
   const accelerationCanonical = div(meters, secondsSquared);
-  assertUnit<'m*m'>(area);
-  assertUnit<'m/s'>(velocity);
-  assertUnit<'m/s/s'>(accelerationComposed);
-  assertUnit<'m/s^2'>(accelerationCanonical);
+  assertUnit<U<'m*m'>>(area);
+  assertUnit<U<'m/s'>>(velocity);
+  assertUnit<U<'m/s^2'>>(accelerationComposed);
+  assertUnit<U<'m/s^2'>>(accelerationCanonical);
+  assertSameUnitType(accelerationComposed, accelerationCanonical);
 
   assertEquals(valueOf(area), 9);
   assertEquals(valueOf(velocity), 1.5);
@@ -98,13 +102,13 @@ Deno.test('units multiplication division and sqrt', () => {
   assertEquals(valueOf(accelerationCanonical), 0.75);
 
   const root = sqrt(area);
-  assertUnit<'m'>(root);
+  assertUnit<U<'m'>>(root);
   assertEquals(valueOf(root), 3);
 });
 
 Deno.test('dimensionless helper and aggregation', () => {
   const one = dimensionless(1);
-  assertUnit<'1'>(one);
+  assertUnit<U<'none'>>(one);
   assertEquals(valueOf(one), 1);
 
   const kilogram = unit('kg');
@@ -114,19 +118,19 @@ Deno.test('dimensionless helper and aggregation', () => {
     quantity(kilogram, 6),
   ] as const;
   const summed = sum(values);
-  const summedEmpty = sum([] as Quantity<'kg'>[]);
+  const summedEmpty = sum([] as Quantity<U<'kg'>>[]);
   const averaged = average(values);
 
-  assertUnit<'kg'>(summed);
-  assertUnit<'kg'>(summedEmpty);
-  assertUnit<'kg'>(averaged);
+  assertUnit<U<'kg'>>(summed);
+  assertUnit<U<'kg'>>(summedEmpty);
+  assertUnit<U<'kg'>>(averaged);
 
   assertEquals(valueOf(summed), 12);
   assertEquals(valueOf(summedEmpty), 0);
   assertEquals(valueOf(averaged), 4);
 
   const explicit = quantity(dimensionlessUnit, 2);
-  assertUnit<'1'>(explicit);
+  assertUnit<U<'none'>>(explicit);
   assertEquals(valueOf(explicit), 2);
 });
 
@@ -138,8 +142,8 @@ Deno.test('clamp enforces range and validates bounds', () => {
   const clampedMax = clamp(value, minValue, maxValue);
   const clampedMiddle = clamp(quantity(meter, 1), minValue, maxValue);
 
-  assertUnit<'m'>(clampedMax);
-  assertUnit<'m'>(clampedMiddle);
+  assertUnit<U<'m'>>(clampedMax);
+  assertUnit<U<'m'>>(clampedMiddle);
 
   assertEquals(valueOf(clampedMax), 3);
   assertEquals(valueOf(clampedMiddle), 1);
@@ -158,7 +162,7 @@ Deno.test('basic numeric invariants', () => {
   const c = quantity(meter, 4);
   const difference = sub(a, b);
 
-  assertUnit<'m'>(difference);
+  assertUnit<U<'m'>>(difference);
 
   assertAlmostEquals(valueOf(difference), valueOf(c));
 });

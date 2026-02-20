@@ -1,3 +1,5 @@
+import type { Quantity, UnitExpr } from '../mod.ts';
+
 /** Throws when the condition is falsy. */
 export const assert = (
   condition: boolean,
@@ -115,4 +117,12 @@ export const assertThrows = (
   }
 
   throw new Error('Expected function to throw');
+};
+
+/** Compile-time only assertion that two quantities share the same unit type. */
+export const assertSameUnitType = <Unit extends UnitExpr>(
+  _left: Quantity<Unit>,
+  _right: Quantity<Unit>,
+): void => {
+  // Type-level assertion only; runtime values are plain numbers.
 };

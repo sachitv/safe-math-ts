@@ -88,13 +88,13 @@ Deno.bench({
 Deno.bench('delta3 add helper addVec3()', () => {
   const meters = unit('m');
   const world = frame('world');
-  const left = delta3<'m', 'world'>(
+  const left = delta3(
     world,
     quantity(meters, 1),
     quantity(meters, 2),
     quantity(meters, 3),
   );
-  const right = delta3<'m', 'world'>(
+  const right = delta3(
     world,
     quantity(meters, 4),
     quantity(meters, 5),
@@ -116,13 +116,13 @@ Deno.bench({
 }, () => {
   const meters = unit('m');
   const world = frame('world');
-  const translationA = delta3<'m', 'world'>(
+  const translationA = delta3(
     world,
     quantity(meters, 1),
     quantity(meters, 2),
     quantity(meters, 3),
   );
-  const translationB = delta3<'m', 'world'>(
+  const translationB = delta3(
     world,
     quantity(meters, 4),
     quantity(meters, 5),
@@ -143,13 +143,13 @@ Deno.bench({
 Deno.bench('mat4 compose helper composeMat4()', () => {
   const meters = unit('m');
   const world = frame('world');
-  const translationA = delta3<'m', 'world'>(
+  const translationA = delta3(
     world,
     quantity(meters, 1),
     quantity(meters, 2),
     quantity(meters, 3),
   );
-  const translationB = delta3<'m', 'world'>(
+  const translationB = delta3(
     world,
     quantity(meters, 4),
     quantity(meters, 5),

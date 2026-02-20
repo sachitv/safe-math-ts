@@ -56,7 +56,7 @@ import {
 const V = frame('V'); // Source frame
 const L = frame('L'); // Destination frame
 const m = unit('m');
-const one = dimensionlessUnit;
+const none = dimensionlessUnit;
 
 const point_V = point3(
   V,
@@ -74,9 +74,9 @@ const delta_translation_L = delta3(
 
 const dir_axisz_V = dir3(
   V,
-  quantity(one, 0),
-  quantity(one, 0),
-  quantity(one, 1),
+  quantity(none, 0),
+  quantity(none, 0),
+  quantity(none, 1),
 );
 
 const quat_turn_LV = quat(
@@ -130,7 +130,7 @@ const point_L = transformPoint3(pose_LV, point_V);
   `frame_local`, `localFrame`), but choose frame tokens that keep derived
   variable names readable.
 - This naming convention is for frame-bearing quantities only; it does not apply
-  to units (for example, `meter`, `second`, `one` are fine).
+  to units (for example, `meter`, `second`, `none` are fine).
 - Prefer short uppercase frame symbols (`L`, `V`, `B`, `W`) in handwritten math
   and derived variable names.
 

@@ -1,4 +1,5 @@
 import {
+  type Dimensionless,
   dimensionlessUnit,
   type NoInfer,
   type Quantity,
@@ -30,7 +31,7 @@ const asMat4 = <
   values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
 
 const asLinearMat4 = <ToFrame extends string, FromFrame extends string>(
-  value: Mat4<ToFrame, FromFrame, '1'>,
+  value: Mat4<ToFrame, FromFrame, Dimensionless>,
 ): LinearMat4<ToFrame, FromFrame> =>
   value as unknown as LinearMat4<ToFrame, FromFrame>;
 
@@ -86,11 +87,11 @@ export const mat4 = <
 /** Creates an identity linear transform for a frame. */
 export const mat4Identity = <Frame extends string>(
   frameTag: FrameTag<Frame>,
-  dimensionlessUnitTag: UnitTag<'1'>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
 ): LinearMat4<Frame, Frame> => {
   void frameTag;
   return asLinearMat4(
-    mat4<Frame, Frame, '1'>(
+    mat4<Frame, Frame, Dimensionless>(
       frameTag,
       frameTag,
       dimensionlessUnitTag,
@@ -150,7 +151,7 @@ export const mat4FromTranslation = <
 /** Creates a non-uniform scale matrix in a frame. */
 export const mat4FromScale = <Frame extends string>(
   frameTag: FrameTag<Frame>,
-  dimensionlessUnitTag: UnitTag<'1'>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
   xScale: number,
   yScale: number,
   zScale: number,
@@ -158,7 +159,7 @@ export const mat4FromScale = <Frame extends string>(
   void frameTag;
   void dimensionlessUnitTag;
   return asLinearMat4(
-    asMat4<Frame, Frame, '1'>([
+    asMat4<Frame, Frame, Dimensionless>([
       xScale,
       0,
       0,
@@ -186,7 +187,7 @@ export const mat4FromQuaternion = <
 >(
   toFrameTag: FrameTag<ToFrame>,
   fromFrameTag: FrameTag<FromFrame>,
-  dimensionlessUnitTag: UnitTag<'1'>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
   rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
 ): LinearMat4<ToFrame, FromFrame> => {
   void toFrameTag;
@@ -206,7 +207,7 @@ export const mat4FromQuaternion = <
   const wz = w * z;
 
   return asLinearMat4(
-    asMat4<ToFrame, FromFrame, '1'>([
+    asMat4<ToFrame, FromFrame, Dimensionless>([
       1 - 2 * (yy + zz),
       2 * (xy - wz),
       2 * (xz + wy),
@@ -495,7 +496,7 @@ export const projectPoint3 = <
 >(
   projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
-): Point3<'1', ToFrame> => {
+): Point3<Dimensionless, ToFrame> => {
   const x = point[0];
   const y = point[1];
   const z = point[2];
@@ -514,10 +515,10 @@ export const projectPoint3 = <
   }
 
   const invW = 1 / clipW;
-  return asPoint3<'1', ToFrame>(
-    asQuantity<'1'>(clipX * invW),
-    asQuantity<'1'>(clipY * invW),
-    asQuantity<'1'>(clipZ * invW),
+  return asPoint3<Dimensionless, ToFrame>(
+    asQuantity<Dimensionless>(clipX * invW),
+    asQuantity<Dimensionless>(clipY * invW),
+    asQuantity<Dimensionless>(clipZ * invW),
   );
 };
 
@@ -900,7 +901,7 @@ export const normalMatrixFromMat4 = <
 
   const inverseDeterminant = 1 / determinant;
   return asLinearMat4(
-    asMat4<ToFrame, FromFrame, '1'>([
+    asMat4<ToFrame, FromFrame, Dimensionless>([
       co00 * inverseDeterminant,
       co10 * inverseDeterminant,
       co20 * inverseDeterminant,

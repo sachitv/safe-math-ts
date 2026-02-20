@@ -1,4 +1,4 @@
-import type { Quantity, UnitExpr } from '../units.ts';
+import type { Dimensionless, Quantity, UnitExpr } from '../units.ts';
 
 declare const frameTagBrand: unique symbol;
 declare const vecBrand: unique symbol;
@@ -27,7 +27,10 @@ type Vec3Base<Unit extends UnitExpr, Frame extends string> =
     Quantity<Unit>,
   ]
   & {
-    readonly [vecBrand]: `${Unit}@${Frame}`;
+    readonly [vecBrand]: {
+      readonly unit: Unit;
+      readonly frame: Frame;
+    };
   };
 
 /**
@@ -38,7 +41,10 @@ type Vec3Base<Unit extends UnitExpr, Frame extends string> =
 export type Point3<Unit extends UnitExpr, Frame extends string> =
   & Vec3Base<Unit, Frame>
   & {
-    readonly [pointBrand]: `point:${Unit}@${Frame}`;
+    readonly [pointBrand]: {
+      readonly unit: Unit;
+      readonly frame: Frame;
+    };
   };
 
 /**
@@ -49,9 +55,11 @@ export type Point3<Unit extends UnitExpr, Frame extends string> =
  * (e.g. `reflectVec3`, `quatFromAxisAngle`) normalize internally.
  */
 export type Dir3<Frame extends string> =
-  & Delta3<'1', Frame>
+  & Delta3<Dimensionless, Frame>
   & {
-    readonly [dirBrand]: `dir:1@${Frame}`;
+    readonly [dirBrand]: {
+      readonly frame: Frame;
+    };
   };
 
 /**
@@ -62,7 +70,10 @@ export type Dir3<Frame extends string> =
 export type Delta3<Unit extends UnitExpr, Frame extends string> =
   & Vec3Base<Unit, Frame>
   & {
-    readonly [deltaBrand]: `delta:${Unit}@${Frame}`;
+    readonly [deltaBrand]: {
+      readonly unit: Unit;
+      readonly frame: Frame;
+    };
   };
 
 /** Quaternion rotation in `<ToFrame, FromFrame>` order. */
@@ -74,7 +85,10 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
     number,
   ]
   & {
-    readonly [quatBrand]: `${ToFrame}<-${FromFrame}`;
+    readonly [quatBrand]: {
+      readonly toFrame: ToFrame;
+      readonly fromFrame: FromFrame;
+    };
   };
 
 /**
@@ -106,16 +120,23 @@ export type Mat4<
     number,
   ]
   & {
-    readonly [matBrand]: `${TranslationUnit}:${ToFrame}<-${FromFrame}`;
+    readonly [matBrand]: {
+      readonly translationUnit: TranslationUnit;
+      readonly toFrame: ToFrame;
+      readonly fromFrame: FromFrame;
+    };
   };
 
 /**
  * Linear-only (zero translation) matrix in `<ToFrame, FromFrame>` order.
  */
 export type LinearMat4<ToFrame extends string, FromFrame extends string> =
-  & Mat4<ToFrame, FromFrame, '1'>
+  & Mat4<ToFrame, FromFrame, Dimensionless>
   & {
-    readonly [linearMatBrand]: `${ToFrame}<-${FromFrame}`;
+    readonly [linearMatBrand]: {
+      readonly toFrame: ToFrame;
+      readonly fromFrame: FromFrame;
+    };
   };
 
 /** Perspective 4x4 projection matrix in `<ToFrame, FromFrame>` order. */
@@ -143,5 +164,9 @@ export type ProjectionMat4<
     number,
   ]
   & {
-    readonly [projectionMatBrand]: `${DepthUnit}:${ToFrame}<-${FromFrame}`;
+    readonly [projectionMatBrand]: {
+      readonly depthUnit: DepthUnit;
+      readonly toFrame: ToFrame;
+      readonly fromFrame: FromFrame;
+    };
   };

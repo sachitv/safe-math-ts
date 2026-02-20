@@ -6,13 +6,14 @@ Complete type and function signatures for safe-math-ts.
 
 ### Units
 
-- `UnitExpr`: string alias for unit expressions.
-- `Dimensionless`: `'1'`.
+- `UnitExpr`: normalized compile-time unit representation.
+- `Dimensionless`: `'none'`.
 - `NoInfer<ValueType>`: generic helper to lock inference.
 - `UnitTag<Unit extends UnitExpr>`: compile-time unit token.
 - `Quantity<Unit extends UnitExpr>`: branded scalar quantity.
 - `MulUnit<LeftUnit, RightUnit>`: type-level unit multiplication helper.
 - `DivUnit<LeftUnit, RightUnit>`: type-level unit division helper.
+- `SqrtUnit<Unit>`: type-level square-root helper for squared units.
 
 ### Frames and geometry
 
@@ -32,7 +33,7 @@ Complete type and function signatures for safe-math-ts.
 ### `unit`
 
 ```ts
-unit<Unit extends UnitExpr>(name: Unit): UnitTag<Unit>
+unit<Expr extends string>(name: Expr): UnitTag<UnitFromString<Expr>>
 ```
 
 Creates a compile-time unit token.
@@ -40,7 +41,7 @@ Creates a compile-time unit token.
 ### `dimensionlessUnit`
 
 ```ts
-const dimensionlessUnit: UnitTag<'1'>;
+const dimensionlessUnit: UnitTag<'none'>;
 ```
 
 Predefined unit token for dimensionless quantities.
@@ -66,7 +67,7 @@ Creates a quantity with explicit unit token.
 ### `dimensionless`
 
 ```ts
-dimensionless(value: number): Quantity<'1'>
+dimensionless(value: number): Quantity<'none'>
 ```
 
 Creates dimensionless quantity.
@@ -144,8 +145,10 @@ div<LeftUnit extends UnitExpr, RightUnit extends UnitExpr>(left: Quantity<LeftUn
 ### `sqrt`
 
 ```ts
-sqrt<Unit extends UnitExpr>(value: Quantity<`${Unit}*${Unit}`>): Quantity<Unit>
+sqrt<Unit extends UnitExpr>(value: Quantity<Unit>): Quantity<SqrtUnit<Unit>>
 ```
+
+Accepts only squared units at compile time.
 
 ### `eq`
 
@@ -206,7 +209,7 @@ point3<Unit extends UnitExpr, Frame extends string>(frameTag: FrameTag<Frame>, x
 ### `dir3`
 
 ```ts
-dir3<Frame extends string>(frameTag: FrameTag<Frame>, x: Quantity<'1'>, y: Quantity<'1'>, z: Quantity<'1'>): Dir3<Frame>
+dir3<Frame extends string>(frameTag: FrameTag<Frame>, x: Quantity<'none'>, y: Quantity<'none'>, z: Quantity<'none'>): Dir3<Frame>
 ```
 
 ### `zeroVec3`
@@ -399,7 +402,7 @@ Throws when value count is not 16.
 ### `mat4Identity`
 
 ```ts
-mat4Identity<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'1'>): LinearMat4<Frame, Frame>
+mat4Identity<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'none'>): LinearMat4<Frame, Frame>
 ```
 
 ### `mat4FromTranslation`
@@ -411,13 +414,13 @@ mat4FromTranslation<TranslationUnit extends UnitExpr, Frame extends string>(fram
 ### `mat4FromScale`
 
 ```ts
-mat4FromScale<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'1'>, xScale: number, yScale: number, zScale: number): LinearMat4<Frame, Frame>
+mat4FromScale<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'none'>, xScale: number, yScale: number, zScale: number): LinearMat4<Frame, Frame>
 ```
 
 ### `mat4FromQuaternion`
 
 ```ts
-mat4FromQuaternion<ToFrame extends string, FromFrame extends string>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, dimensionlessUnitTag: UnitTag<'1'>, rotation: Quaternion<ToFrame, FromFrame>): LinearMat4<ToFrame, FromFrame>
+mat4FromQuaternion<ToFrame extends string, FromFrame extends string>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, dimensionlessUnitTag: UnitTag<'none'>, rotation: Quaternion<ToFrame, FromFrame>): LinearMat4<ToFrame, FromFrame>
 ```
 
 ### `mat4FromRigidTransform`

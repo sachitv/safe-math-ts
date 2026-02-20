@@ -1,4 +1,5 @@
 import {
+  type Dimensionless,
   type MulUnit,
   type NoInfer,
   type Quantity,
@@ -24,9 +25,9 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
 ): Point3<Unit, Frame> => [x, y, z] as unknown as Point3<Unit, Frame>;
 
 const asDir3 = <Frame extends string>(
-  x: Quantity<'1'>,
-  y: Quantity<'1'>,
-  z: Quantity<'1'>,
+  x: Quantity<Dimensionless>,
+  y: Quantity<Dimensionless>,
+  z: Quantity<Dimensionless>,
 ): Dir3<Frame> => [x, y, z] as unknown as Dir3<Frame>;
 
 /** Constructs a frame-aware displacement vector. */
@@ -54,9 +55,9 @@ export const point3 = <Unit extends UnitExpr, Frame extends string>(
 /** Constructs a frame-aware direction (dimensionless). */
 export const dir3 = <Frame extends string>(
   frameTag: FrameTag<Frame>,
-  x: Quantity<'1'>,
-  y: Quantity<'1'>,
-  z: Quantity<'1'>,
+  x: Quantity<Dimensionless>,
+  y: Quantity<Dimensionless>,
+  z: Quantity<Dimensionless>,
 ): Dir3<Frame> => {
   void frameTag;
   return asDir3<Frame>(x, y, z);
@@ -254,9 +255,9 @@ export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
   }
 
   return asDir3<Frame>(
-    asQuantity<'1'>(value[0] / magnitude),
-    asQuantity<'1'>(value[1] / magnitude),
-    asQuantity<'1'>(value[2] / magnitude),
+    asQuantity<Dimensionless>(value[0] / magnitude),
+    asQuantity<Dimensionless>(value[1] / magnitude),
+    asQuantity<Dimensionless>(value[2] / magnitude),
   );
 };
 

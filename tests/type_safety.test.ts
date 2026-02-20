@@ -5,25 +5,58 @@ import {
   delta3,
   dimensionlessUnit,
   dir3,
+  div,
   frame,
   mat4,
   mat4FromQuaternion,
   mat4FromTranslation,
+  mul,
   point3,
   quantity,
   quat,
   quatFromAxisAngle,
   rotateVec3ByQuat,
+  sqrt,
   subPoint3,
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assert } from './assert.test.ts';
+import type { DivUnit, MulUnit, UnitFromString } from '../mod.ts';
+import { assert, assertSameUnitType } from './assert.test.ts';
 
 const frame_world = frame('world');
 const frame_body = frame('body');
 const meter = unit('m');
 const second = unit('s');
+const secondSquared = unit('s^2');
+
+type IsEqual<Left, Right> = (<Type>() => Type extends Left ? 1 : 2) extends
+  (<Type>() => Type extends Right ? 1 : 2) ? true
+  : false;
+
+type AssertTrue<Value extends true> = Value;
+
+type _assert_parse_canonical_acceleration = AssertTrue<
+  IsEqual<UnitFromString<'m/s/s'>, UnitFromString<'m/s^2'>>
+>;
+type _assert_parse_factor_cancellation = AssertTrue<
+  IsEqual<UnitFromString<'m*s/s'>, UnitFromString<'m'>>
+>;
+type _assert_parse_dimensionless_factor = AssertTrue<
+  IsEqual<UnitFromString<'none*m'>, UnitFromString<'m'>>
+>;
+type _assert_mul_type_cancellation = AssertTrue<
+  IsEqual<
+    MulUnit<UnitFromString<'m/s'>, UnitFromString<'s'>>,
+    UnitFromString<'m'>
+  >
+>;
+type _assert_div_type_expansion = AssertTrue<
+  IsEqual<
+    DivUnit<UnitFromString<'m'>, UnitFromString<'s^2'>>,
+    UnitFromString<'m/s^2'>
+  >
+>;
 
 const point_world = point3(
   frame_world,
@@ -62,6 +95,25 @@ const delta_body = delta3(
   quantity(meter, 2),
   quantity(meter, 3),
 );
+
+const meters = quantity(meter, 6);
+const seconds = quantity(second, 2);
+const secondsSquared = quantity(secondSquared, 4);
+const velocity = div(meters, seconds);
+const accelerationComposed = div(velocity, seconds);
+const accelerationCanonical = div(meters, secondsSquared);
+
+assertSameUnitType(accelerationComposed, accelerationCanonical);
+
+// @ts-expect-error velocity and acceleration units should not match
+assertSameUnitType(velocity, accelerationComposed);
+
+const area = mul(meters, meters);
+const distanceRoot = sqrt(area);
+assertSameUnitType(distanceRoot, meters);
+
+// @ts-expect-error sqrt requires squared units
+sqrt(meters);
 
 addVec3(delta_world, delta_world);
 
