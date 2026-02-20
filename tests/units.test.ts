@@ -39,7 +39,7 @@ type U<Expr extends string> = UnitFromString<Expr>;
 const assertUnit = <Unit extends UnitExpr>(
   _value: Quantity<Unit>,
 ): void => {
-  // Compile-time only assertion that the quantity carries Unit.
+  /** Compile-time only assertion that the quantity carries `Unit`. */
 };
 
 Deno.test('units arithmetic and comparisons', () => {

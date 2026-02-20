@@ -20,7 +20,7 @@ Deno.test('example: compose vehicle and sensor poses for robotics localization',
   const sin45 = Math.sin(Math.PI / 4);
   const cos45 = Math.cos(Math.PI / 4);
 
-  // pose_vehicle_lidar maps points from lidar frame into vehicle frame.
+  /** `pose_vehicle_lidar` maps points from lidar frame into vehicle frame. */
   const quat_mount_vehicle_lidar = quat(
     frame_vehicle,
     frame_lidar,
@@ -42,7 +42,7 @@ Deno.test('example: compose vehicle and sensor poses for robotics localization',
     delta_mount_vehicle,
   );
 
-  // pose_world_vehicle maps points from vehicle frame into world frame.
+  /** `pose_world_vehicle` maps points from vehicle frame into world frame. */
   const quat_heading_world_vehicle = quat(
     frame_world,
     frame_vehicle,

@@ -124,5 +124,5 @@ export const assertSameUnitType = <Unit extends UnitExpr>(
   _left: Quantity<Unit>,
   _right: Quantity<Unit>,
 ): void => {
-  // Type-level assertion only; runtime values are plain numbers.
+  /** Type-level assertion only; runtime values are plain numbers. */
 };
