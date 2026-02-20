@@ -244,6 +244,26 @@ const NEAR_ZERO = 1e-14;
 /**
  * Normalizes displacement length to 1.
  *
+ * Unsafe variant: performs no zero-length guard.
+ * Degenerate inputs can yield `NaN`/`Infinity`.
+ */
+export const normalizeVec3Unsafe = <
+  Unit extends UnitExpr,
+  Frame extends string,
+>(
+  value: Delta3<Unit, Frame>,
+): Dir3<Frame> => {
+  const magnitude = lengthVec3(value);
+  return asDir3<Frame>(
+    asQuantity<Dimensionless>(value[0] / magnitude),
+    asQuantity<Dimensionless>(value[1] / magnitude),
+    asQuantity<Dimensionless>(value[2] / magnitude),
+  );
+};
+
+/**
+ * Normalizes displacement length to 1.
+ *
  * Throws when vector length is at or below `1e-14`.
  */
 export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
@@ -254,11 +274,7 @@ export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
     throw new Error('Cannot normalize a zero-length vector');
   }
 
-  return asDir3<Frame>(
-    asQuantity<Dimensionless>(value[0] / magnitude),
-    asQuantity<Dimensionless>(value[1] / magnitude),
-    asQuantity<Dimensionless>(value[2] / magnitude),
-  );
+  return normalizeVec3Unsafe(value);
 };
 
 /** Linearly interpolates between two displacements. */
@@ -290,6 +306,32 @@ export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
   ] as unknown as Delta3<Unit, Frame> | Point3<Unit, Frame>;
 }
 
+/**
+ * Projects a displacement onto another displacement in the same frame.
+ *
+ * Unsafe variant: performs no zero-length guard for `onto`.
+ */
+export const projectVec3Unsafe = <
+  ValueUnit extends UnitExpr,
+  OntoUnit extends UnitExpr,
+  Frame extends string,
+>(
+  value: Delta3<ValueUnit, Frame>,
+  onto: Delta3<OntoUnit, NoInfer<Frame>>,
+): Delta3<ValueUnit, Frame> => {
+  const ontoLengthSquared = onto[0] * onto[0] + onto[1] * onto[1] +
+    onto[2] * onto[2];
+  const scalar = (value[0] * onto[0] + value[1] * onto[1] +
+    value[2] * onto[2]) /
+    ontoLengthSquared;
+
+  return asDelta3<ValueUnit, Frame>(
+    asQuantity<ValueUnit>(onto[0] * scalar),
+    asQuantity<ValueUnit>(onto[1] * scalar),
+    asQuantity<ValueUnit>(onto[2] * scalar),
+  );
+};
+
 /** Projects a displacement onto another displacement in the same frame. */
 export const projectVec3 = <
   ValueUnit extends UnitExpr,
@@ -305,23 +347,19 @@ export const projectVec3 = <
     throw new Error('Cannot project onto a zero-length vector');
   }
 
-  const scalar = (value[0] * onto[0] + value[1] * onto[1] +
-    value[2] * onto[2]) /
-    ontoLengthSquared;
-
-  return asDelta3<ValueUnit, Frame>(
-    asQuantity<ValueUnit>(onto[0] * scalar),
-    asQuantity<ValueUnit>(onto[1] * scalar),
-    asQuantity<ValueUnit>(onto[2] * scalar),
-  );
+  return projectVec3Unsafe(value, onto);
 };
 
-/** Reflects a displacement around a normal direction. */
-export const reflectVec3 = <Unit extends UnitExpr, Frame extends string>(
+/**
+ * Reflects a displacement around a normal direction.
+ *
+ * Unsafe variant: performs no zero-length guard for `normal`.
+ */
+export const reflectVec3Unsafe = <Unit extends UnitExpr, Frame extends string>(
   incident: Delta3<Unit, Frame>,
   normal: Dir3<NoInfer<Frame>>,
 ): Delta3<Unit, Frame> => {
-  const dir_normalized = normalizeVec3(normal);
+  const dir_normalized = normalizeVec3Unsafe(normal);
   const scale = 2 *
     (incident[0] * dir_normalized[0] + incident[1] * dir_normalized[1] +
       incident[2] * dir_normalized[2]);
@@ -331,6 +369,38 @@ export const reflectVec3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(incident[1] - dir_normalized[1] * scale),
     asQuantity<Unit>(incident[2] - dir_normalized[2] * scale),
   );
+};
+
+/** Reflects a displacement around a normal direction. */
+export const reflectVec3 = <Unit extends UnitExpr, Frame extends string>(
+  incident: Delta3<Unit, Frame>,
+  normal: Dir3<NoInfer<Frame>>,
+): Delta3<Unit, Frame> => {
+  normalizeVec3(normal);
+  return reflectVec3Unsafe(incident, normal);
+};
+
+/**
+ * Computes the angle in radians between two displacements.
+ *
+ * Unsafe variant: performs no zero-length guards.
+ */
+export const angleBetweenVec3Unsafe = <
+  LeftUnit extends UnitExpr,
+  RightUnit extends UnitExpr,
+  Frame extends string,
+>(
+  left: Delta3<LeftUnit, Frame>,
+  right: Delta3<RightUnit, NoInfer<Frame>>,
+): number => {
+  const leftLength = Math.hypot(left[0], left[1], left[2]);
+  const rightLength = Math.hypot(right[0], right[1], right[2]);
+  const cosine = (left[0] * right[0] + left[1] * right[1] +
+    left[2] * right[2]) /
+    (leftLength * rightLength);
+
+  const clamped = Math.max(-1, Math.min(1, cosine));
+  return Math.acos(clamped);
 };
 
 /** Computes the angle in radians between two non-zero displacements. */
@@ -349,10 +419,5 @@ export const angleBetweenVec3 = <
     throw new Error('Cannot compute angle with a zero-length vector');
   }
 
-  const cosine = (left[0] * right[0] + left[1] * right[1] +
-    left[2] * right[2]) /
-    (leftLength * rightLength);
-
-  const clamped = Math.max(-1, Math.min(1, cosine));
-  return Math.acos(clamped);
+  return angleBetweenVec3Unsafe(left, right);
 };

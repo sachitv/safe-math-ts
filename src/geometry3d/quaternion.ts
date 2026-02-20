@@ -1,6 +1,6 @@
 import { type NoInfer, type Quantity, type UnitExpr } from '../units.ts';
 import type { Delta3, Dir3, FrameTag, Quaternion } from './types.ts';
-import { normalizeVec3 } from './vector3.ts';
+import { normalizeVec3, normalizeVec3Unsafe } from './vector3.ts';
 
 const NEAR_ZERO = 1e-14;
 
@@ -68,6 +68,27 @@ export const quatNorm = <ToFrame extends string, FromFrame extends string>(
 /**
  * Normalizes quaternion length to 1.
  *
+ * Unsafe variant: performs no zero-length guard.
+ * Degenerate inputs can yield `NaN`/`Infinity`.
+ */
+export const quatNormalizeUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<ToFrame, FromFrame> => {
+  const norm = quatNorm(value);
+  return asQuaternion<ToFrame, FromFrame>(
+    value[0] / norm,
+    value[1] / norm,
+    value[2] / norm,
+    value[3] / norm,
+  );
+};
+
+/**
+ * Normalizes quaternion length to 1.
+ *
  * Throws when quaternion norm is zero.
  */
 export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
@@ -78,11 +99,28 @@ export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
     throw new Error('Cannot normalize a zero-length quaternion');
   }
 
-  return asQuaternion<ToFrame, FromFrame>(
-    value[0] / norm,
-    value[1] / norm,
-    value[2] / norm,
-    value[3] / norm,
+  return quatNormalizeUnsafe(value);
+};
+
+/**
+ * Computes quaternion inverse.
+ *
+ * Unsafe variant: performs no zero-length guard.
+ * Degenerate inputs can yield `NaN`/`Infinity`.
+ */
+export const quatInverseUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<FromFrame, ToFrame> => {
+  const normSquared = quatNormSquared(value);
+  const conjugate = quatConjugate(value);
+  return asQuaternion<FromFrame, ToFrame>(
+    conjugate[0] / normSquared,
+    conjugate[1] / normSquared,
+    conjugate[2] / normSquared,
+    conjugate[3] / normSquared,
   );
 };
 
@@ -99,13 +137,7 @@ export const quatInverse = <ToFrame extends string, FromFrame extends string>(
     throw new Error('Cannot invert a zero-length quaternion');
   }
 
-  const conjugate = quatConjugate(value);
-  return asQuaternion<FromFrame, ToFrame>(
-    conjugate[0] / normSquared,
-    conjugate[1] / normSquared,
-    conjugate[2] / normSquared,
-    conjugate[3] / normSquared,
-  );
+  return quatInverseUnsafe(value);
 };
 
 /**
@@ -131,6 +163,47 @@ export const composeQuats = <
     w2 * w1 - x2 * x1 - y2 * y1 - z2 * z1,
   );
 };
+
+/** Rotates a vector from `FromFrame` into `ToFrame`. */
+export function rotateVec3ByQuatUnsafe<
+  Unit extends UnitExpr,
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>>,
+): Delta3<Unit, ToFrame>;
+
+/** Rotates a direction from `FromFrame` into `ToFrame`. */
+export function rotateVec3ByQuatUnsafe<
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Dir3<NoInfer<FromFrame>>,
+): Dir3<ToFrame>;
+
+export function rotateVec3ByQuatUnsafe<
+  Unit extends UnitExpr,
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
+): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
+  const [qx, qy, qz, qw] = quatNormalizeUnsafe(rotation);
+  const [vx, vy, vz] = value;
+
+  const tx = 2 * (qy * vz - qz * vy);
+  const ty = 2 * (qz * vx - qx * vz);
+  const tz = 2 * (qx * vy - qy * vx);
+
+  return [
+    asQuantity<Unit>(vx + qw * tx + (qy * tz - qz * ty)),
+    asQuantity<Unit>(vy + qw * ty + (qz * tx - qx * tz)),
+    asQuantity<Unit>(vz + qw * tz + (qx * ty - qy * tx)),
+  ] as unknown as Delta3<Unit, ToFrame> | Dir3<ToFrame>;
+}
 
 /** Rotates a vector from `FromFrame` into `ToFrame`. */
 export function rotateVec3ByQuat<
@@ -159,33 +232,26 @@ export function rotateVec3ByQuat<
   rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
-  const [qx, qy, qz, qw] = quatNormalize(rotation);
-  const [vx, vy, vz] = value;
-
-  const tx = 2 * (qy * vz - qz * vy);
-  const ty = 2 * (qz * vx - qx * vz);
-  const tz = 2 * (qx * vy - qy * vx);
-
-  return [
-    asQuantity<Unit>(vx + qw * tx + (qy * tz - qz * ty)),
-    asQuantity<Unit>(vy + qw * ty + (qz * tx - qx * tz)),
-    asQuantity<Unit>(vz + qw * tz + (qx * ty - qy * tx)),
-  ] as unknown as Delta3<Unit, ToFrame> | Dir3<ToFrame>;
+  quatNormalize(rotation);
+  return rotateVec3ByQuatUnsafe(
+    rotation,
+    value as Delta3<Unit, NoInfer<FromFrame>>,
+  );
 }
 
 /**
  * Creates a quaternion from axis-angle representation.
  *
  * Axis is normalized internally.
- * Throws when axis has zero length.
+ * Unsafe variant: performs no zero-length guard for `axis`.
  */
-export const quatFromAxisAngle = <Frame extends string>(
+export const quatFromAxisAngleUnsafe = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   axis: Dir3<Frame>,
   angleRadians: number,
 ): Quaternion<Frame, Frame> => {
   void frameTag;
-  const normalizedAxis = normalizeVec3(axis);
+  const normalizedAxis = normalizeVec3Unsafe(axis);
   const halfAngle = angleRadians * 0.5;
   const sinHalfAngle = Math.sin(halfAngle);
   const cosHalfAngle = Math.cos(halfAngle);
@@ -198,8 +264,23 @@ export const quatFromAxisAngle = <Frame extends string>(
   );
 };
 
+/**
+ * Creates a quaternion from axis-angle representation.
+ *
+ * Axis is normalized internally.
+ * Throws when axis has zero length.
+ */
+export const quatFromAxisAngle = <Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  axis: Dir3<Frame>,
+  angleRadians: number,
+): Quaternion<Frame, Frame> => {
+  normalizeVec3(axis);
+  return quatFromAxisAngleUnsafe(frameTag, axis, angleRadians);
+};
+
 /** Builds a frame-local quaternion from Euler angles and explicit axis order. */
-export const quatFromEuler = <Frame extends string>(
+export const quatFromEulerUnsafe = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   xRadians: number,
   yRadians: number,
@@ -229,7 +310,59 @@ export const quatFromEuler = <Frame extends string>(
     quat_result = composeQuats(quat_result, makeAxisQuat(axis));
   }
 
+  return quatNormalizeUnsafe(quat_result);
+};
+
+/** Builds a frame-local quaternion from Euler angles and explicit axis order. */
+export const quatFromEuler = <Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  xRadians: number,
+  yRadians: number,
+  zRadians: number,
+  order: EulerOrder = 'ZYX',
+): Quaternion<Frame, Frame> => {
+  const quat_result = quatFromEulerUnsafe(
+    frameTag,
+    xRadians,
+    yRadians,
+    zRadians,
+    order,
+  );
   return quatNormalize(quat_result);
+};
+
+/** Normalized linear interpolation with shortest-path hemisphere selection. */
+export const quatNlerpUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame> => {
+  let endX = end[0];
+  let endY = end[1];
+  let endZ = end[2];
+  let endW = end[3];
+
+  const dot = start[0] * endX + start[1] * endY + start[2] * endZ +
+    start[3] * endW;
+  if (dot < 0) {
+    endX = -endX;
+    endY = -endY;
+    endZ = -endZ;
+    endW = -endW;
+  }
+
+  const inverseT = 1 - t;
+  return quatNormalizeUnsafe(
+    asQuaternion<ToFrame, FromFrame>(
+      start[0] * inverseT + endX * t,
+      start[1] * inverseT + endY * t,
+      start[2] * inverseT + endZ * t,
+      start[3] * inverseT + endW * t,
+    ),
+  );
 };
 
 /** Normalized linear interpolation with shortest-path hemisphere selection. */
@@ -253,12 +386,57 @@ export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
   }
 
   const inverseT = 1 - t;
-  return quatNormalize(
+  const quat_blend = asQuaternion<ToFrame, FromFrame>(
+    start[0] * inverseT + endX * t,
+    start[1] * inverseT + endY * t,
+    start[2] * inverseT + endZ * t,
+    start[3] * inverseT + endW * t,
+  );
+  quatNormalize(quat_blend);
+  return quatNlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
+};
+
+/** Spherical interpolation with shortest-path hemisphere selection. */
+export const quatSlerpUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame> => {
+  let endX = end[0];
+  let endY = end[1];
+  let endZ = end[2];
+  let endW = end[3];
+
+  let cosine = start[0] * endX + start[1] * endY + start[2] * endZ +
+    start[3] * endW;
+  if (cosine < 0) {
+    cosine = -cosine;
+    endX = -endX;
+    endY = -endY;
+    endZ = -endZ;
+    endW = -endW;
+  }
+
+  if (cosine > 0.9995) {
+    return quatNlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
+  }
+
+  const theta0 = Math.acos(Math.max(-1, Math.min(1, cosine)));
+  const sinTheta0 = Math.sin(theta0);
+  const theta = theta0 * t;
+  const sinTheta = Math.sin(theta);
+  const s0 = Math.sin(theta0 - theta) / sinTheta0;
+  const s1 = sinTheta / sinTheta0;
+
+  return quatNormalizeUnsafe(
     asQuaternion<ToFrame, FromFrame>(
-      start[0] * inverseT + endX * t,
-      start[1] * inverseT + endY * t,
-      start[2] * inverseT + endZ * t,
-      start[3] * inverseT + endW * t,
+      s0 * start[0] + s1 * endX,
+      s0 * start[1] + s1 * endY,
+      s0 * start[2] + s1 * endZ,
+      s0 * start[3] + s1 * endW,
     ),
   );
 };
@@ -294,13 +472,12 @@ export const quatSlerp = <ToFrame extends string, FromFrame extends string>(
   const sinTheta = Math.sin(theta);
   const s0 = Math.sin(theta0 - theta) / sinTheta0;
   const s1 = sinTheta / sinTheta0;
-
-  return quatNormalize(
-    asQuaternion<ToFrame, FromFrame>(
-      s0 * start[0] + s1 * endX,
-      s0 * start[1] + s1 * endY,
-      s0 * start[2] + s1 * endZ,
-      s0 * start[3] + s1 * endW,
-    ),
+  const quat_blend = asQuaternion<ToFrame, FromFrame>(
+    s0 * start[0] + s1 * endX,
+    s0 * start[1] + s1 * endY,
+    s0 * start[2] + s1 * endZ,
+    s0 * start[3] + s1 * endW,
   );
+  quatNormalize(quat_blend);
+  return quatSlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
 };

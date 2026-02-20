@@ -6,19 +6,28 @@ import {
   dir3,
   frame,
   invertRigidMat4,
+  invertRigidMat4Unsafe,
   mat4,
   mat4FromQuaternion,
+  mat4FromQuaternionUnsafe,
   mat4FromRigidTransform,
   mat4FromScale,
   mat4FromTranslation,
   mat4FromTRS,
+  mat4FromTRSUnsafe,
   mat4Identity,
   mat4LookAt,
+  mat4LookAtUnsafe,
   mat4Perspective,
+  mat4PerspectiveUnsafe,
+  mat4Unsafe,
   normalMatrixFromMat4,
+  normalMatrixFromMat4Unsafe,
   point3,
   projectPoint3,
+  projectPoint3Unsafe,
   quantity,
+  quat,
   quatFromAxisAngle,
   transformDirection3,
   transformPoint3,
@@ -569,4 +578,105 @@ Deno.test('trs transform and cache reuse', () => {
     dir_scale_world,
   );
   assert(Object.is(pose_cached_first_world, pose_cached_second_world));
+});
+
+Deno.test('unsafe matrix helpers skip validation checks', () => {
+  const frame_world = frame('world');
+  const frame_ndc = frame('ndc');
+  const meter = unit('m');
+  const point_origin_world = point3(
+    frame_world,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+
+  const pose_invalid_world = mat4Unsafe(
+    frame_world,
+    frame_world,
+    dimensionlessUnit,
+    [1, 2, 3],
+  );
+  assertEquals(pose_invalid_world, [1, 2, 3]);
+
+  const pose_perspective_invalid = mat4PerspectiveUnsafe(
+    frame_ndc,
+    frame_world,
+    0,
+    0,
+    quantity(meter, 1),
+    quantity(meter, 1),
+  );
+  assert(!Number.isFinite(pose_perspective_invalid[0]));
+
+  const point_projected = projectPoint3Unsafe(
+    pose_perspective_invalid,
+    point_origin_world,
+  );
+  assert(
+    Number.isNaN(point_projected[0]) || !Number.isFinite(point_projected[0]),
+  );
+
+  const pose_lookat_invalid = mat4LookAtUnsafe(
+    frame_world,
+    frame_world,
+    point_origin_world,
+    point_origin_world,
+    dir3(
+      frame_world,
+      quantity(dimensionlessUnit, 0),
+      quantity(dimensionlessUnit, 0),
+      quantity(dimensionlessUnit, 0),
+    ),
+  );
+  assert(Number.isNaN(pose_lookat_invalid[0]));
+
+  const pose_scale_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    2,
+    3,
+    4,
+  );
+  invertRigidMat4Unsafe(pose_scale_world);
+
+  const pose_singular_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1,
+    0,
+    1,
+  );
+  const pose_normal_unsafe_world = normalMatrixFromMat4Unsafe(
+    pose_singular_world,
+  );
+  assert(!Number.isFinite(pose_normal_unsafe_world[5]));
+
+  const quat_zero_world_world = quat(frame_world, frame_world, 0, 0, 0, 0);
+  const pose_rot_unsafe_world = mat4FromQuaternionUnsafe(
+    frame_world,
+    frame_world,
+    dimensionlessUnit,
+    quat_zero_world_world,
+  );
+  assert(Number.isNaN(pose_rot_unsafe_world[0]));
+
+  const pose_trs_unsafe_world = mat4FromTRSUnsafe(
+    frame_world,
+    frame_world,
+    delta3(
+      frame_world,
+      quantity(meter, 0),
+      quantity(meter, 0),
+      quantity(meter, 0),
+    ),
+    quat_zero_world_world,
+    dir3(
+      frame_world,
+      quantity(dimensionlessUnit, 1),
+      quantity(dimensionlessUnit, 1),
+      quantity(dimensionlessUnit, 1),
+    ),
+  );
+  assert(Number.isNaN(pose_trs_unsafe_world[0]));
 });

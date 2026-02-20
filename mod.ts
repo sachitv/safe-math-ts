@@ -4,6 +4,7 @@ export {
   approxEq,
   average,
   clamp,
+  clampUnsafe,
   dimensionless,
   dimensionlessUnit,
   div,

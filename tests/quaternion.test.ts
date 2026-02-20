@@ -8,18 +8,25 @@ import {
   quat,
   quatConjugate,
   quatFromAxisAngle,
+  quatFromAxisAngleUnsafe,
   quatFromEuler,
   quatIdentity,
   quatInverse,
+  quatInverseUnsafe,
   quatNlerp,
+  quatNlerpUnsafe,
   quatNorm,
   quatNormalize,
+  quatNormalizeUnsafe,
   quatNormSquared,
   quatSlerp,
+  quatSlerpUnsafe,
   rotateVec3ByQuat,
+  rotateVec3ByQuatUnsafe,
   unit,
 } from '../mod.ts';
 import {
+  assert,
   assertAlmostEquals,
   assertEquals,
   assertThrows,
@@ -239,4 +246,78 @@ Deno.test('axis-angle rejects zero axis', () => {
     Error,
     'Cannot normalize a zero-length vector',
   );
+});
+
+Deno.test('unsafe quaternion helpers skip validation checks', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+  const quat_zero_world_world = quat(frame_world, frame_world, 0, 0, 0, 0);
+  const quat_identity_world_world = quat(frame_world, frame_world, 0, 0, 0, 1);
+  const quat_negidentity_world_world = quat(
+    frame_world,
+    frame_world,
+    0,
+    0,
+    0,
+    -1,
+  );
+  const dir_axiszero_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+  );
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+
+  const quat_normalized_world_world = quatNormalizeUnsafe(
+    quat_zero_world_world,
+  );
+  assert(Number.isNaN(quat_normalized_world_world[0]));
+
+  const quat_inverse_world_world = quatInverseUnsafe(quat_zero_world_world);
+  assert(Number.isNaN(quat_inverse_world_world[3]));
+
+  const delta_rotated_world = rotateVec3ByQuatUnsafe(
+    quat_zero_world_world,
+    delta_x_world,
+  );
+  assert(Number.isNaN(delta_rotated_world[0]));
+
+  const quat_axis_world_world = quatFromAxisAngleUnsafe(
+    frame_world,
+    dir_axiszero_world,
+    Math.PI / 2,
+  );
+  assert(Number.isNaN(quat_axis_world_world[0]));
+
+  const quat_nlerp_world_world = quatNlerpUnsafe(
+    quat_zero_world_world,
+    quat_zero_world_world,
+    0.5,
+  );
+  assert(Number.isNaN(quat_nlerp_world_world[0]));
+  const quat_nlerp_shortest_world_world = quatNlerpUnsafe(
+    quat_identity_world_world,
+    quat_negidentity_world_world,
+    0.5,
+  );
+  assertQuatAlmostEquals(quat_nlerp_shortest_world_world, [0, 0, 0, 1]);
+
+  const quat_slerp_world_world = quatSlerpUnsafe(
+    quat_zero_world_world,
+    quat_zero_world_world,
+    0.5,
+  );
+  assert(Number.isNaN(quat_slerp_world_world[0]));
+  const quat_slerp_shortest_world_world = quatSlerpUnsafe(
+    quat_identity_world_world,
+    quat_negidentity_world_world,
+    0.5,
+  );
+  assertQuatAlmostEquals(quat_slerp_shortest_world_world, [0, 0, 0, 1]);
 });

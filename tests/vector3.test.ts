@@ -2,6 +2,7 @@ import {
   addPoint3,
   addVec3,
   angleBetweenVec3,
+  angleBetweenVec3Unsafe,
   crossVec3,
   delta3,
   dimensionlessUnit,
@@ -14,10 +15,13 @@ import {
   lerpVec3,
   negVec3,
   normalizeVec3,
+  normalizeVec3Unsafe,
   point3,
   projectVec3,
+  projectVec3Unsafe,
   quantity,
   reflectVec3,
+  reflectVec3Unsafe,
   scaleDir3,
   scaleVec3,
   subPoint3,
@@ -28,6 +32,7 @@ import {
   zeroVec3,
 } from '../mod.ts';
 import {
+  assert,
   assertAlmostEquals,
   assertEquals,
   assertThrows,
@@ -293,4 +298,46 @@ Deno.test('near-zero vectors are rejected by epsilon guards', () => {
     Error,
     'Cannot compute angle with a zero-length vector',
   );
+});
+
+Deno.test('unsafe vector helpers skip validation checks', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const delta_zero_world = delta3(
+    frame_world,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const dir_zero_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+  );
+
+  const dir_normalized_world = normalizeVec3Unsafe(delta_zero_world);
+  assert(Number.isNaN(dir_normalized_world[0]));
+
+  const delta_projected_world = projectVec3Unsafe(
+    delta_x_world,
+    delta_zero_world,
+  );
+  assert(Number.isNaN(delta_projected_world[0]));
+
+  const angle = angleBetweenVec3Unsafe(delta_x_world, delta_zero_world);
+  assert(Number.isNaN(angle));
+
+  const delta_reflected_world = reflectVec3Unsafe(
+    delta_x_world,
+    dir_zero_world,
+  );
+  assert(Number.isNaN(delta_reflected_world[0]));
 });

@@ -65,7 +65,7 @@ const point_V = point3(
   quantity(m, 3),
 );
 
-const delta_translation_L = delta3(
+const delta_offset_L = delta3(
   L,
   quantity(m, 10),
   quantity(m, 0),
@@ -92,7 +92,7 @@ const pose_LV = mat4FromRigidTransform(
   L,
   V,
   quat_turn_LV,
-  delta_translation_L,
+  delta_offset_L,
 );
 
 const point_L = transformPoint3(pose_LV, point_V);
@@ -107,6 +107,19 @@ const point_L = transformPoint3(pose_LV, point_V);
 - Apply rigid transforms to points with `transformPoint3`.
 - Apply linear transforms/rotations to displacements with `transformDirection3`
   or `rotateVec3ByQuat`.
+
+## Safe and unsafe APIs
+
+- Safe APIs are the default functions (for example `normalizeVec3`, `clamp`,
+  `mat4Perspective`, `projectPoint3`).
+- Unsafe APIs end with `Unsafe` (for example `normalizeVec3Unsafe`,
+  `clampUnsafe`, `mat4PerspectiveUnsafe`, `projectPoint3Unsafe`).
+- Safe APIs validate inputs and throw on invalid/degenerate cases.
+- Unsafe APIs skip validation and can produce `NaN`/`Infinity` on invalid
+  inputs.
+- Recommended pattern:
+  1. Validate at system boundaries with safe APIs.
+  2. Use unsafe APIs only in hot paths where inputs are already guaranteed.
 
 ## Naming best practices
 

@@ -307,6 +307,17 @@ export const max = <Unit extends UnitExpr>(
 /**
  * Clamps a quantity to the inclusive range [`minValue`, `maxValue`].
  *
+ * Unsafe variant: performs no bound-order validation.
+ */
+export const clampUnsafe = <Unit extends UnitExpr>(
+  value: Quantity<Unit>,
+  minValue: Quantity<NoInfer<Unit>>,
+  maxValue: Quantity<NoInfer<Unit>>,
+): Quantity<Unit> => max(minValue, min(value, maxValue));
+
+/**
+ * Clamps a quantity to the inclusive range [`minValue`, `maxValue`].
+ *
  * Throws when `minValue > maxValue`.
  */
 export const clamp = <Unit extends UnitExpr>(
@@ -318,7 +329,7 @@ export const clamp = <Unit extends UnitExpr>(
     throw new Error('minValue must be <= maxValue');
   }
 
-  return max(minValue, min(value, maxValue));
+  return clampUnsafe(value, minValue, maxValue);
 };
 
 /** Multiplies a quantity by a unitless scalar. */

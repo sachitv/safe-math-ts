@@ -4,6 +4,7 @@ import {
   approxEq,
   average,
   clamp,
+  clampUnsafe,
   dimensionless,
   dimensionlessUnit,
   div,
@@ -153,6 +154,10 @@ Deno.test('clamp enforces range and validates bounds', () => {
     Error,
     'minValue must be <= maxValue',
   );
+
+  const unsafe = clampUnsafe(value, quantity(meter, 4), quantity(meter, 2));
+  assertUnit<U<'m'>>(unsafe);
+  assertEquals(valueOf(unsafe), 4);
 });
 
 Deno.test('basic numeric invariants', () => {

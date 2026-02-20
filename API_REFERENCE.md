@@ -1,496 +1,546 @@
 # API Reference
 
-Complete type and function signatures for safe-math-ts.
+Complete exported API for safe-math-ts.
+
+## Safety model
+
+- Safe APIs use the base name (for example `normalizeVec3`, `clamp`, `mat4`).
+- Unsafe APIs use the `Unsafe` suffix (for example `normalizeVec3Unsafe`,
+  `clampUnsafe`, `mat4Unsafe`).
+- Safe APIs validate inputs and throw on invalid/degenerate cases.
+- Unsafe APIs skip validation and may return `NaN`/`Infinity` on invalid input.
 
 ## Type reference
 
 ### Units
 
-- `UnitExpr`: normalized compile-time unit representation.
-- `Dimensionless`: `'none'`.
-- `NoInfer<ValueType>`: generic helper to lock inference.
-- `UnitTag<Unit extends UnitExpr>`: compile-time unit token.
-- `Quantity<Unit extends UnitExpr>`: branded scalar quantity.
-- `MulUnit<LeftUnit, RightUnit>`: type-level unit multiplication helper.
-- `DivUnit<LeftUnit, RightUnit>`: type-level unit division helper.
-- `SqrtUnit<Unit>`: type-level square-root helper for squared units.
+- `UnitExpr`
+- `Dimensionless`
+- `NoInfer<ValueType>`
+- `UnitFromString<Expr>`
+- `UnitTag<Unit extends UnitExpr>`
+- `Quantity<Unit extends UnitExpr>`
+- `MulUnit<LeftUnit, RightUnit>`
+- `DivUnit<LeftUnit, RightUnit>`
+- `SqrtUnit<Unit>`
 
 ### Frames and geometry
 
-- `FrameTag<Frame extends string>`: compile-time frame token.
-- `Point3<Unit, Frame>`: branded affine point.
-- `Delta3<Unit, Frame>`: branded displacement/translation vector.
-- `Dir3<Frame>`: branded unitless direction vector.
-- `Quaternion<ToFrame, FromFrame>`: branded quaternion rotation.
-- `Mat4<ToFrame, FromFrame, TranslationUnit>`: branded 4x4 affine transform.
-- `LinearMat4<ToFrame, FromFrame>`: branded 4x4 linear transform (translation
-  fixed to zero).
-
-## API reference
+- `FrameTag<Frame extends string>`
+- `Point3<Unit, Frame>`
+- `Delta3<Unit, Frame>`
+- `Dir3<Frame>`
+- `Quaternion<ToFrame, FromFrame>`
+- `Mat4<ToFrame, FromFrame, TranslationUnit>`
+- `LinearMat4<ToFrame, FromFrame>`
+- `ProjectionMat4<ToFrame, FromFrame, DepthUnit>`
+- `EulerOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX'`
 
 ## Token constructors
 
-### `unit`
-
 ```ts
 unit<Expr extends string>(name: Expr): UnitTag<UnitFromString<Expr>>
-```
-
-Creates a compile-time unit token.
-
-### `dimensionlessUnit`
-
-```ts
-const dimensionlessUnit: UnitTag<'none'>;
-```
-
-Predefined unit token for dimensionless quantities.
-
-### `frame`
-
-```ts
+const dimensionlessUnit: UnitTag<Dimensionless>
 frame<Frame extends string>(name: Frame): FrameTag<Frame>
 ```
 
-Creates a compile-time frame token.
-
 ## Scalar/unit functions (`src/units.ts`)
-
-### `quantity`
 
 ```ts
 quantity<Unit extends UnitExpr>(unitTag: UnitTag<Unit>, value: number): Quantity<Unit>
-```
-
-Creates a quantity with explicit unit token.
-
-### `dimensionless`
-
-```ts
-dimensionless(value: number): Quantity<'none'>
-```
-
-Creates dimensionless quantity.
-
-### `valueOf`
-
-```ts
+dimensionless(value: number): Quantity<Dimensionless>
 valueOf<Unit extends UnitExpr>(value: Quantity<Unit>): number
-```
 
-Unwraps to raw number.
-
-### `add`
-
-```ts
-add<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): Quantity<Unit>
-```
-
-### `sub`
-
-```ts
-sub<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): Quantity<Unit>
-```
-
-### `neg`
-
-```ts
+add<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): Quantity<Unit>
+sub<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): Quantity<Unit>
 neg<Unit extends UnitExpr>(value: Quantity<Unit>): Quantity<Unit>
-```
-
-### `abs`
-
-```ts
 abs<Unit extends UnitExpr>(value: Quantity<Unit>): Quantity<Unit>
-```
+min<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): Quantity<Unit>
+max<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): Quantity<Unit>
 
-### `min`
+clampUnsafe<Unit extends UnitExpr>(
+  value: Quantity<Unit>,
+  minValue: Quantity<NoInfer<Unit>>,
+  maxValue: Quantity<NoInfer<Unit>>,
+): Quantity<Unit>
 
-```ts
-min<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): Quantity<Unit>
-```
+clamp<Unit extends UnitExpr>(
+  value: Quantity<Unit>,
+  minValue: Quantity<NoInfer<Unit>>,
+  maxValue: Quantity<NoInfer<Unit>>,
+): Quantity<Unit>
 
-### `max`
-
-```ts
-max<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): Quantity<Unit>
-```
-
-### `clamp`
-
-```ts
-clamp<Unit extends UnitExpr>(value: Quantity<Unit>, minValue: Quantity<Unit>, maxValue: Quantity<Unit>): Quantity<Unit>
-```
-
-Throws when `minValue > maxValue`.
-
-### `scale`
-
-```ts
 scale<Unit extends UnitExpr>(value: Quantity<Unit>, scalar: number): Quantity<Unit>
-```
-
-### `mul`
-
-```ts
-mul<LeftUnit extends UnitExpr, RightUnit extends UnitExpr>(left: Quantity<LeftUnit>, right: Quantity<RightUnit>): Quantity<MulUnit<LeftUnit, RightUnit>>
-```
-
-### `div`
-
-```ts
-div<LeftUnit extends UnitExpr, RightUnit extends UnitExpr>(left: Quantity<LeftUnit>, right: Quantity<RightUnit>): Quantity<DivUnit<LeftUnit, RightUnit>>
-```
-
-### `sqrt`
-
-```ts
+mul<LeftUnit extends UnitExpr, RightUnit extends UnitExpr>(
+  left: Quantity<LeftUnit>,
+  right: Quantity<RightUnit>,
+): Quantity<MulUnit<LeftUnit, RightUnit>>
+div<LeftUnit extends UnitExpr, RightUnit extends UnitExpr>(
+  left: Quantity<LeftUnit>,
+  right: Quantity<RightUnit>,
+): Quantity<DivUnit<LeftUnit, RightUnit>>
 sqrt<Unit extends UnitExpr>(value: Quantity<Unit>): Quantity<SqrtUnit<Unit>>
-```
 
-Accepts only squared units at compile time.
+eq<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): boolean
+approxEq<Unit extends UnitExpr>(
+  left: Quantity<Unit>,
+  right: Quantity<NoInfer<Unit>>,
+  tolerance?: number,
+): boolean
+lt<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): boolean
+lte<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): boolean
+gt<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): boolean
+gte<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<NoInfer<Unit>>): boolean
 
-### `eq`
-
-```ts
-eq<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): boolean
-```
-
-### `lt`
-
-```ts
-lt<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): boolean
-```
-
-### `lte`
-
-```ts
-lte<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): boolean
-```
-
-### `gt`
-
-```ts
-gt<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): boolean
-```
-
-### `gte`
-
-```ts
-gte<Unit extends UnitExpr>(left: Quantity<Unit>, right: Quantity<Unit>): boolean
-```
-
-### `sum`
-
-```ts
 sum<Unit extends UnitExpr>(values: readonly Quantity<Unit>[]): Quantity<Unit>
-```
-
-### `average`
-
-```ts
-average<Unit extends UnitExpr>(values: readonly [Quantity<Unit>, ...Quantity<Unit>[]]): Quantity<Unit>
+average<Unit extends UnitExpr>(
+  values: readonly [Quantity<Unit>, ...Quantity<Unit>[]],
+): Quantity<Unit>
 ```
 
 ## Vector functions (`src/geometry3d/vector3.ts`)
 
-### `delta3`
-
 ```ts
-delta3<Unit extends UnitExpr, Frame extends string>(frameTag: FrameTag<Frame>, x: Quantity<Unit>, y: Quantity<Unit>, z: Quantity<Unit>): Delta3<Unit, Frame>
-```
+delta3<Unit extends UnitExpr, Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  x: Quantity<Unit>,
+  y: Quantity<Unit>,
+  z: Quantity<Unit>,
+): Delta3<Unit, Frame>
 
-### `point3`
+point3<Unit extends UnitExpr, Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  x: Quantity<Unit>,
+  y: Quantity<Unit>,
+  z: Quantity<Unit>,
+): Point3<Unit, Frame>
 
-```ts
-point3<Unit extends UnitExpr, Frame extends string>(frameTag: FrameTag<Frame>, x: Quantity<Unit>, y: Quantity<Unit>, z: Quantity<Unit>): Point3<Unit, Frame>
-```
+dir3<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  x: Quantity<Dimensionless>,
+  y: Quantity<Dimensionless>,
+  z: Quantity<Dimensionless>,
+): Dir3<Frame>
 
-### `dir3`
+zeroVec3<Unit extends UnitExpr, Frame extends string>(
+  unitTag: UnitTag<Unit>,
+  frameTag: FrameTag<Frame>,
+): Delta3<Unit, Frame>
 
-```ts
-dir3<Frame extends string>(frameTag: FrameTag<Frame>, x: Quantity<'none'>, y: Quantity<'none'>, z: Quantity<'none'>): Dir3<Frame>
-```
-
-### `zeroVec3`
-
-```ts
-zeroVec3<Unit extends UnitExpr, Frame extends string>(unitTag: UnitTag<Unit>, frameTag: FrameTag<Frame>): Delta3<Unit, Frame>
-```
-
-### `addVec3`
-
-```ts
-addVec3<Unit extends UnitExpr, Frame extends string>(left: Delta3<Unit, Frame>, right: Delta3<Unit, Frame>): Delta3<Unit, Frame>
-```
-
-### `addPoint3`
-
-```ts
-addPoint3<Unit extends UnitExpr, Frame extends string>(point: Point3<Unit, Frame>, delta: Delta3<Unit, Frame>): Point3<Unit, Frame>
-```
-
-### `subPoint3`
-
-```ts
-subPoint3<Unit extends UnitExpr, Frame extends string>(left: Point3<Unit, Frame>, right: Point3<Unit, Frame>): Delta3<Unit, Frame>
-```
-
-### `subPoint3Delta3`
-
-```ts
-subPoint3Delta3<Unit extends UnitExpr, Frame extends string>(point: Point3<Unit, Frame>, delta: Delta3<Unit, Frame>): Point3<Unit, Frame>
-```
-
-### `subVec3`
-
-```ts
-subVec3<Unit extends UnitExpr, Frame extends string>(left: Delta3<Unit, Frame>, right: Delta3<Unit, Frame>): Delta3<Unit, Frame>
-```
-
-### `negVec3`
-
-```ts
+addVec3<Unit extends UnitExpr, Frame extends string>(
+  left: Delta3<Unit, Frame>,
+  right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+): Delta3<Unit, Frame>
+subVec3<Unit extends UnitExpr, Frame extends string>(
+  left: Delta3<Unit, Frame>,
+  right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+): Delta3<Unit, Frame>
 negVec3<Unit extends UnitExpr, Frame extends string>(value: Delta3<Unit, Frame>): Delta3<Unit, Frame>
-```
-
-### `scaleVec3`
-
-```ts
 scaleVec3<Unit extends UnitExpr, Frame extends string>(value: Delta3<Unit, Frame>, scalar: number): Delta3<Unit, Frame>
-```
-
-### `scaleDir3`
-
-```ts
 scaleDir3<Unit extends UnitExpr, Frame extends string>(value: Dir3<Frame>, magnitude: Quantity<Unit>): Delta3<Unit, Frame>
-```
 
-### `dotVec3`
+addPoint3<Unit extends UnitExpr, Frame extends string>(
+  point: Point3<Unit, Frame>,
+  delta: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+): Point3<Unit, Frame>
+subPoint3Delta3<Unit extends UnitExpr, Frame extends string>(
+  point: Point3<Unit, Frame>,
+  delta: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+): Point3<Unit, Frame>
+subPoint3<Unit extends UnitExpr, Frame extends string>(
+  left: Point3<Unit, Frame>,
+  right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
+): Delta3<Unit, Frame>
 
-```ts
-dotVec3<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(left: Delta3<LeftUnit, Frame>, right: Delta3<RightUnit, Frame>): Quantity<MulUnit<LeftUnit, RightUnit>>
-```
+dotVec3<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(
+  left: Delta3<LeftUnit, Frame>,
+  right: Delta3<RightUnit, NoInfer<Frame>>,
+): Quantity<MulUnit<LeftUnit, RightUnit>>
+crossVec3<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(
+  left: Delta3<LeftUnit, Frame>,
+  right: Delta3<RightUnit, NoInfer<Frame>>,
+): Delta3<MulUnit<LeftUnit, RightUnit>, Frame>
 
-### `crossVec3`
-
-```ts
-crossVec3<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(left: Delta3<LeftUnit, Frame>, right: Delta3<RightUnit, Frame>): Delta3<MulUnit<LeftUnit, RightUnit>, Frame>
-```
-
-### `lengthSquaredVec3`
-
-```ts
 lengthSquaredVec3<Unit extends UnitExpr, Frame extends string>(value: Delta3<Unit, Frame>): Quantity<MulUnit<Unit, Unit>>
-```
-
-### `lengthVec3`
-
-```ts
 lengthVec3<Unit extends UnitExpr, Frame extends string>(value: Delta3<Unit, Frame>): Quantity<Unit>
-```
 
-### `distanceVec3`
+distanceVec3<Unit extends UnitExpr, Frame extends string>(
+  left: Delta3<Unit, Frame>,
+  right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+): Quantity<Unit>
+distanceVec3<Unit extends UnitExpr, Frame extends string>(
+  left: Point3<Unit, Frame>,
+  right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
+): Quantity<Unit>
+distancePoint3<Unit extends UnitExpr, Frame extends string>(
+  left: Point3<Unit, Frame>,
+  right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
+): Quantity<Unit>
 
-```ts
-distanceVec3<Unit extends UnitExpr, Frame extends string>(left: Delta3<Unit, Frame>, right: Delta3<Unit, Frame>): Quantity<Unit>
-distanceVec3<Unit extends UnitExpr, Frame extends string>(left: Point3<Unit, Frame>, right: Point3<Unit, Frame>): Quantity<Unit>
-```
+normalizeVec3Unsafe<Unit extends UnitExpr, Frame extends string>(
+  value: Delta3<Unit, Frame>,
+): Dir3<Frame>
+normalizeVec3<Unit extends UnitExpr, Frame extends string>(
+  value: Delta3<Unit, Frame>,
+): Dir3<Frame>
 
-### `distancePoint3`
+lerpVec3<Unit extends UnitExpr, Frame extends string>(
+  start: Delta3<Unit, Frame>,
+  end: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
+  t: number,
+): Delta3<Unit, Frame>
+lerpVec3<Unit extends UnitExpr, Frame extends string>(
+  start: Point3<Unit, Frame>,
+  end: Point3<NoInfer<Unit>, NoInfer<Frame>>,
+  t: number,
+): Point3<Unit, Frame>
 
-```ts
-distancePoint3<Unit extends UnitExpr, Frame extends string>(left: Point3<Unit, Frame>, right: Point3<Unit, Frame>): Quantity<Unit>
-```
+projectVec3Unsafe<ValueUnit extends UnitExpr, OntoUnit extends UnitExpr, Frame extends string>(
+  value: Delta3<ValueUnit, Frame>,
+  onto: Delta3<OntoUnit, NoInfer<Frame>>,
+): Delta3<ValueUnit, Frame>
+projectVec3<ValueUnit extends UnitExpr, OntoUnit extends UnitExpr, Frame extends string>(
+  value: Delta3<ValueUnit, Frame>,
+  onto: Delta3<OntoUnit, NoInfer<Frame>>,
+): Delta3<ValueUnit, Frame>
 
-### `normalizeVec3`
+reflectVec3Unsafe<Unit extends UnitExpr, Frame extends string>(
+  incident: Delta3<Unit, Frame>,
+  normal: Dir3<NoInfer<Frame>>,
+): Delta3<Unit, Frame>
+reflectVec3<Unit extends UnitExpr, Frame extends string>(
+  incident: Delta3<Unit, Frame>,
+  normal: Dir3<NoInfer<Frame>>,
+): Delta3<Unit, Frame>
 
-```ts
-normalizeVec3<Unit extends UnitExpr, Frame extends string>(value: Delta3<Unit, Frame>): Dir3<Frame>
-```
-
-Throws when length is zero.
-
-### `lerpVec3`
-
-```ts
-lerpVec3<Unit extends UnitExpr, Frame extends string>(start: Delta3<Unit, Frame>, end: Delta3<Unit, Frame>, t: number): Delta3<Unit, Frame>
-lerpVec3<Unit extends UnitExpr, Frame extends string>(start: Point3<Unit, Frame>, end: Point3<Unit, Frame>, t: number): Point3<Unit, Frame>
+angleBetweenVec3Unsafe<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(
+  left: Delta3<LeftUnit, Frame>,
+  right: Delta3<RightUnit, NoInfer<Frame>>,
+): number
+angleBetweenVec3<LeftUnit extends UnitExpr, RightUnit extends UnitExpr, Frame extends string>(
+  left: Delta3<LeftUnit, Frame>,
+  right: Delta3<RightUnit, NoInfer<Frame>>,
+): number
 ```
 
 ## Quaternion functions (`src/geometry3d/quaternion.ts`)
 
-### `quat`
-
 ```ts
-quat<ToFrame extends string, FromFrame extends string>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, x: number, y: number, z: number, w: number): Quaternion<ToFrame, FromFrame>
-```
+quat<ToFrame extends string, FromFrame extends string>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  x: number,
+  y: number,
+  z: number,
+  w: number,
+): Quaternion<ToFrame, FromFrame>
 
-### `quatIdentity`
-
-```ts
 quatIdentity<Frame extends string>(frameTag: FrameTag<Frame>): Quaternion<Frame, Frame>
+quatConjugate<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<FromFrame, ToFrame>
+quatNormSquared<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number
+quatNorm<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number
+
+quatNormalizeUnsafe<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<ToFrame, FromFrame>
+quatNormalize<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<ToFrame, FromFrame>
+
+quatInverseUnsafe<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<FromFrame, ToFrame>
+quatInverse<ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): Quaternion<FromFrame, ToFrame>
+
+composeQuats<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(
+  first: Quaternion<ViaFrame, FromFrame>,
+  second: Quaternion<ToFrame, NoInfer<ViaFrame>>,
+): Quaternion<ToFrame, FromFrame>
+
+rotateVec3ByQuatUnsafe<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>>,
+): Delta3<Unit, ToFrame>
+rotateVec3ByQuatUnsafe<ToFrame extends string, FromFrame extends string>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Dir3<NoInfer<FromFrame>>,
+): Dir3<ToFrame>
+
+rotateVec3ByQuat<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>>,
+): Delta3<Unit, ToFrame>
+rotateVec3ByQuat<ToFrame extends string, FromFrame extends string>(
+  rotation: Quaternion<ToFrame, FromFrame>,
+  value: Dir3<NoInfer<FromFrame>>,
+): Dir3<ToFrame>
+
+quatFromAxisAngleUnsafe<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  axis: Dir3<Frame>,
+  angleRadians: number,
+): Quaternion<Frame, Frame>
+quatFromAxisAngle<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  axis: Dir3<Frame>,
+  angleRadians: number,
+): Quaternion<Frame, Frame>
+
+quatFromEulerUnsafe<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  xRadians: number,
+  yRadians: number,
+  zRadians: number,
+  order?: EulerOrder,
+): Quaternion<Frame, Frame>
+quatFromEuler<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  xRadians: number,
+  yRadians: number,
+  zRadians: number,
+  order?: EulerOrder,
+): Quaternion<Frame, Frame>
+
+quatNlerpUnsafe<ToFrame extends string, FromFrame extends string>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame>
+quatNlerp<ToFrame extends string, FromFrame extends string>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame>
+
+quatSlerpUnsafe<ToFrame extends string, FromFrame extends string>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame>
+quatSlerp<ToFrame extends string, FromFrame extends string>(
+  start: Quaternion<ToFrame, FromFrame>,
+  end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  t: number,
+): Quaternion<ToFrame, FromFrame>
 ```
-
-### `quatConjugate`
-
-```ts
-quatConjugate<ToFrame extends string, FromFrame extends string>(value: Quaternion<ToFrame, FromFrame>): Quaternion<FromFrame, ToFrame>
-```
-
-### `quatNormSquared`
-
-```ts
-quatNormSquared<ToFrame extends string, FromFrame extends string>(value: Quaternion<ToFrame, FromFrame>): number
-```
-
-### `quatNorm`
-
-```ts
-quatNorm<ToFrame extends string, FromFrame extends string>(value: Quaternion<ToFrame, FromFrame>): number
-```
-
-### `quatNormalize`
-
-```ts
-quatNormalize<ToFrame extends string, FromFrame extends string>(value: Quaternion<ToFrame, FromFrame>): Quaternion<ToFrame, FromFrame>
-```
-
-Throws when norm is zero.
-
-### `quatInverse`
-
-```ts
-quatInverse<ToFrame extends string, FromFrame extends string>(value: Quaternion<ToFrame, FromFrame>): Quaternion<FromFrame, ToFrame>
-```
-
-Throws when norm is zero.
-
-### `composeQuats`
-
-```ts
-composeQuats<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(first: Quaternion<ViaFrame, FromFrame>, second: Quaternion<ToFrame, ViaFrame>): Quaternion<ToFrame, FromFrame>
-```
-
-Order: apply `first`, then `second`.
-
-### `rotateVec3ByQuat`
-
-```ts
-rotateVec3ByQuat<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(rotation: Quaternion<ToFrame, FromFrame>, value: Delta3<Unit, FromFrame>): Delta3<Unit, ToFrame>
-rotateVec3ByQuat<ToFrame extends string, FromFrame extends string>(rotation: Quaternion<ToFrame, FromFrame>, value: Dir3<FromFrame>): Dir3<ToFrame>
-```
-
-### `quatFromAxisAngle`
-
-```ts
-quatFromAxisAngle<Frame extends string>(frameTag: FrameTag<Frame>, axis: Dir3<Frame>, angleRadians: number): Quaternion<Frame, Frame>
-```
-
-Axis is normalized internally. Throws for zero axis.
 
 ## Matrix functions (`src/geometry3d/matrix4.ts`)
 
-### `mat4`
-
 ```ts
-mat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, translationUnitTag: UnitTag<TranslationUnit>, values: readonly number[]): Mat4<ToFrame, FromFrame, TranslationUnit>
+mat4Unsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translationUnitTag: UnitTag<TranslationUnit>,
+  values: readonly number[],
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+mat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translationUnitTag: UnitTag<TranslationUnit>,
+  values: readonly number[],
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+
+mat4Identity<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
+): LinearMat4<Frame, Frame>
+mat4FromTranslation<TranslationUnit extends UnitExpr, Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  translation: Delta3<TranslationUnit, Frame>,
+): Mat4<Frame, Frame, TranslationUnit>
+mat4FromScale<Frame extends string>(
+  frameTag: FrameTag<Frame>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
+  xScale: number,
+  yScale: number,
+  zScale: number,
+): LinearMat4<Frame, Frame>
+
+mat4FromQuaternionUnsafe<ToFrame extends string, FromFrame extends string>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
+  rotation: Quaternion<ToFrame, FromFrame>,
+): LinearMat4<ToFrame, FromFrame>
+mat4FromQuaternion<ToFrame extends string, FromFrame extends string>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
+  rotation: Quaternion<ToFrame, FromFrame>,
+): LinearMat4<ToFrame, FromFrame>
+
+mat4FromRigidTransform<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  rotation: Quaternion<ToFrame, FromFrame>,
+  translation: Delta3<TranslationUnit, NoInfer<ToFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+
+mat4FromTRSUnsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translation: Delta3<TranslationUnit, NoInfer<ToFrame>>,
+  rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  scale: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+mat4FromTRS<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translation: Delta3<TranslationUnit, NoInfer<ToFrame>>,
+  rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  scale: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+
+createTrsMat4Cache<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translationUnitTag: UnitTag<TranslationUnit>,
+): (
+  translation: Delta3<TranslationUnit, NoInfer<ToFrame>>,
+  rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  scale: Dir3<NoInfer<FromFrame>>,
+) => Mat4<ToFrame, FromFrame, TranslationUnit>
+
+mat4PerspectiveUnsafe<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  fieldOfViewYRadians: number,
+  aspect: number,
+  near: Quantity<DepthUnit>,
+  far: Quantity<NoInfer<DepthUnit>>,
+): ProjectionMat4<ToFrame, FromFrame, DepthUnit>
+mat4Perspective<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  fieldOfViewYRadians: number,
+  aspect: number,
+  near: Quantity<DepthUnit>,
+  far: Quantity<NoInfer<DepthUnit>>,
+): ProjectionMat4<ToFrame, FromFrame, DepthUnit>
+
+projectPoint3Unsafe<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
+  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+): Point3<Dimensionless, ToFrame>
+projectPoint3<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
+  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+): Point3<Dimensionless, ToFrame>
+
+mat4LookAtUnsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  point_eye_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  point_target_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  dir_up_from: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+mat4LookAt<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  point_eye_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  point_target_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  dir_up_from: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+
+transposeMat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Mat4<FromFrame, ToFrame, TranslationUnit>
+transposeMat4<ToFrame extends string, FromFrame extends string>(
+  value: LinearMat4<ToFrame, FromFrame>,
+): LinearMat4<FromFrame, ToFrame>
+
+composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(
+  first: LinearMat4<ViaFrame, FromFrame>,
+  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+): LinearMat4<ToFrame, FromFrame>
+composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  first: LinearMat4<ViaFrame, FromFrame>,
+  second: Mat4<ToFrame, NoInfer<ViaFrame>, TranslationUnit>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
+  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
+  second: Mat4<ToFrame, NoInfer<ViaFrame>, NoInfer<TranslationUnit>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit>
+composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, LeftTranslationUnit extends UnitExpr, RightTranslationUnit extends UnitExpr>(
+  first: Mat4<ViaFrame, FromFrame, LeftTranslationUnit>,
+  second: Mat4<ToFrame, NoInfer<ViaFrame>, RightTranslationUnit>,
+): Mat4<ToFrame, FromFrame, UnitExpr>
+
+invertRigidMat4Unsafe<ToFrame extends string, FromFrame extends string>(
+  value: LinearMat4<ToFrame, FromFrame>,
+): LinearMat4<FromFrame, ToFrame>
+invertRigidMat4Unsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Mat4<FromFrame, ToFrame, TranslationUnit>
+invertRigidMat4<ToFrame extends string, FromFrame extends string>(
+  value: LinearMat4<ToFrame, FromFrame>,
+): LinearMat4<FromFrame, ToFrame>
+invertRigidMat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Mat4<FromFrame, ToFrame, TranslationUnit>
+
+normalMatrixFromMat4Unsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): LinearMat4<ToFrame, FromFrame>
+normalMatrixFromMat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): LinearMat4<ToFrame, FromFrame>
+
+transformPoint3<TranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
+  point: Point3<NoInfer<TranslationUnit>, NoInfer<FromFrame>>,
+): Point3<TranslationUnit, ToFrame>
+transformPoint3<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  matrix: LinearMat4<ToFrame, FromFrame>,
+  point: Point3<Unit, NoInfer<FromFrame>>,
+): Point3<Unit, ToFrame>
+
+transformDirection3<Unit extends UnitExpr, MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  direction: Delta3<Unit, NoInfer<FromFrame>>,
+): Delta3<Unit, ToFrame>
+transformDirection3<MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  direction: Dir3<NoInfer<FromFrame>>,
+): Dir3<ToFrame>
 ```
 
-Throws when value count is not 16.
+## Safe API error conditions
 
-### `mat4Identity`
-
-```ts
-mat4Identity<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'none'>): LinearMat4<Frame, Frame>
-```
-
-### `mat4FromTranslation`
-
-```ts
-mat4FromTranslation<TranslationUnit extends UnitExpr, Frame extends string>(frameTag: FrameTag<Frame>, translation: Delta3<TranslationUnit, Frame>): Mat4<Frame, Frame, TranslationUnit>
-```
-
-### `mat4FromScale`
-
-```ts
-mat4FromScale<Frame extends string>(frameTag: FrameTag<Frame>, dimensionlessUnitTag: UnitTag<'none'>, xScale: number, yScale: number, zScale: number): LinearMat4<Frame, Frame>
-```
-
-### `mat4FromQuaternion`
-
-```ts
-mat4FromQuaternion<ToFrame extends string, FromFrame extends string>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, dimensionlessUnitTag: UnitTag<'none'>, rotation: Quaternion<ToFrame, FromFrame>): LinearMat4<ToFrame, FromFrame>
-```
-
-### `mat4FromRigidTransform`
-
-```ts
-mat4FromRigidTransform<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(toFrameTag: FrameTag<ToFrame>, fromFrameTag: FrameTag<FromFrame>, rotation: Quaternion<ToFrame, FromFrame>, translation: Delta3<TranslationUnit, ToFrame>): Mat4<ToFrame, FromFrame, TranslationUnit>
-```
-
-### `transposeMat4`
-
-```ts
-transposeMat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(value: Mat4<ToFrame, FromFrame, TranslationUnit>): Mat4<FromFrame, ToFrame, TranslationUnit>
-transposeMat4<ToFrame extends string, FromFrame extends string>(value: LinearMat4<ToFrame, FromFrame>): LinearMat4<FromFrame, ToFrame>
-```
-
-### `composeMat4`
-
-```ts
-composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(first: LinearMat4<ViaFrame, FromFrame>, second: LinearMat4<ToFrame, ViaFrame>): LinearMat4<ToFrame, FromFrame>
-composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(first: LinearMat4<ViaFrame, FromFrame>, second: Mat4<ToFrame, ViaFrame, TranslationUnit>): Mat4<ToFrame, FromFrame, TranslationUnit>
-composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(first: Mat4<ViaFrame, FromFrame, TranslationUnit>, second: LinearMat4<ToFrame, ViaFrame>): Mat4<ToFrame, FromFrame, TranslationUnit>
-composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(first: Mat4<ViaFrame, FromFrame, TranslationUnit>, second: Mat4<ToFrame, ViaFrame, TranslationUnit>): Mat4<ToFrame, FromFrame, TranslationUnit>
-composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, LeftTranslationUnit extends UnitExpr, RightTranslationUnit extends UnitExpr>(first: Mat4<ViaFrame, FromFrame, LeftTranslationUnit>, second: Mat4<ToFrame, ViaFrame, RightTranslationUnit>): Mat4<ToFrame, FromFrame, UnitExpr>
-```
-
-Order: apply `first`, then `second`.
-
-### `invertRigidMat4`
-
-```ts
-invertRigidMat4<ToFrame extends string, FromFrame extends string>(value: LinearMat4<ToFrame, FromFrame>): LinearMat4<FromFrame, ToFrame>
-invertRigidMat4<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(value: Mat4<ToFrame, FromFrame, TranslationUnit>): Mat4<FromFrame, ToFrame, TranslationUnit>
-```
-
-Throws when matrix is not rigid.
-
-### `transformPoint3`
-
-```ts
-transformPoint3<TranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(matrix: Mat4<ToFrame, FromFrame, TranslationUnit>, point: Point3<TranslationUnit, FromFrame>): Point3<TranslationUnit, ToFrame>
-transformPoint3<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(matrix: LinearMat4<ToFrame, FromFrame>, point: Point3<Unit, FromFrame>): Point3<Unit, ToFrame>
-```
-
-Includes translation.
-
-### `transformDirection3`
-
-```ts
-transformDirection3<Unit extends UnitExpr, MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>, direction: Delta3<Unit, FromFrame>): Delta3<Unit, ToFrame>
-transformDirection3<MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>, direction: Dir3<FromFrame>): Dir3<ToFrame>
-```
-
-Ignores translation.
-
-## Error conditions
-
-Functions that throw by design:
+Safe APIs that can throw:
 
 - `clamp` when `minValue > maxValue`
-- `normalizeVec3` on zero vector
-- `quatNormalize` on zero quaternion
-- `quatInverse` on zero quaternion
-- `quatFromAxisAngle` on zero axis
-- `mat4` with non-16 input length
-- `invertRigidMat4` for non-rigid matrices
+- `normalizeVec3` when vector length is too small
+- `projectVec3` when projection target length is too small
+- `reflectVec3` when normal length is too small
+- `angleBetweenVec3` when either input length is too small
+- `quatNormalize` when quaternion length is too small
+- `quatInverse` when quaternion length is too small
+- `quatFromAxisAngle` when axis length is too small
+- `mat4` when value count is not 16
+- `mat4Perspective` when FOV/aspect/near/far are invalid
+- `projectPoint3` when homogeneous `w === 0`
+- `mat4LookAt` for degenerate eye/target/up configurations
+- `invertRigidMat4` when matrix fails rigid transform checks
+- `normalMatrixFromMat4` when linear part is singular
 
 ## Development
 
 ```bash
 deno task check
-deno test --coverage=coverage --coverage-raw-data-only
+deno test
+deno test --coverage=coverage --no-check
 deno coverage coverage
 ```

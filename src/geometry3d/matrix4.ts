@@ -6,7 +6,7 @@ import {
   type UnitExpr,
   type UnitTag,
 } from '../units.ts';
-import { quatNormalize } from './quaternion.ts';
+import { quatNormalize, quatNormalizeUnsafe } from './quaternion.ts';
 import type {
   Delta3,
   Dir3,
@@ -61,6 +61,29 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
  *
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
+ * Unsafe variant: slices to 16 values without length validation.
+ */
+export const mat4Unsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translationUnitTag: UnitTag<TranslationUnit>,
+  values: readonly number[],
+): Mat4<ToFrame, FromFrame, TranslationUnit> => {
+  void toFrameTag;
+  void fromFrameTag;
+  void translationUnitTag;
+  return asMat4<ToFrame, FromFrame, TranslationUnit>(values.slice(0, 16));
+};
+
+/**
+ * Creates a typed 4x4 matrix from 16 row-major values.
+ *
+ * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
+ * frame/unit declaration at construction.
  * Throws when `values.length !== 16`.
  */
 export const mat4 = <
@@ -81,7 +104,7 @@ export const mat4 = <
     throw new Error(`Mat4 expects 16 values, received ${values.length}`);
   }
 
-  return asMat4<ToFrame, FromFrame, TranslationUnit>(values.slice(0, 16));
+  return mat4Unsafe(toFrameTag, fromFrameTag, translationUnitTag, values);
 };
 
 /** Creates an identity linear transform for a frame. */
@@ -181,7 +204,7 @@ export const mat4FromScale = <Frame extends string>(
 };
 
 /** Creates a rotation matrix from a quaternion. */
-export const mat4FromQuaternion = <
+export const mat4FromQuaternionUnsafe = <
   ToFrame extends string,
   FromFrame extends string,
 >(
@@ -194,7 +217,7 @@ export const mat4FromQuaternion = <
   void fromFrameTag;
   void dimensionlessUnitTag;
 
-  const [x, y, z, w] = quatNormalize(rotation);
+  const [x, y, z, w] = quatNormalizeUnsafe(rotation);
 
   const xx = x * x;
   const yy = y * y;
@@ -225,6 +248,25 @@ export const mat4FromQuaternion = <
       0,
       1,
     ]),
+  );
+};
+
+/** Creates a rotation matrix from a quaternion. */
+export const mat4FromQuaternion = <
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  dimensionlessUnitTag: UnitTag<Dimensionless>,
+  rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+): LinearMat4<ToFrame, FromFrame> => {
+  quatNormalize(rotation);
+  return mat4FromQuaternionUnsafe(
+    toFrameTag,
+    fromFrameTag,
+    dimensionlessUnitTag,
+    rotation,
   );
 };
 
@@ -275,7 +317,7 @@ export const mat4FromRigidTransform = <
  * Order: scale in `FromFrame`, then rotate `FromFrame -> ToFrame`, then translate
  * in `ToFrame`.
  */
-export const mat4FromTRS = <
+export const mat4FromTRSUnsafe = <
   ToFrame extends string,
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
@@ -289,7 +331,7 @@ export const mat4FromTRS = <
   void toFrameTag;
   void fromFrameTag;
 
-  const [x, y, z, w] = quatNormalize(rotation);
+  const [x, y, z, w] = quatNormalizeUnsafe(rotation);
 
   const xx = x * x;
   const yy = y * y;
@@ -323,6 +365,33 @@ export const mat4FromTRS = <
     0,
     1,
   ]);
+};
+
+/**
+ * Builds an affine transform from translation, rotation, and non-uniform scale.
+ *
+ * Order: scale in `FromFrame`, then rotate `FromFrame -> ToFrame`, then translate
+ * in `ToFrame`.
+ */
+export const mat4FromTRS = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  translation: Delta3<TranslationUnit, NoInfer<ToFrame>>,
+  rotation: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+  scale: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit> => {
+  quatNormalize(rotation);
+  return mat4FromTRSUnsafe(
+    toFrameTag,
+    fromFrameTag,
+    translation,
+    rotation,
+    scale,
+  );
 };
 
 /**
@@ -436,6 +505,49 @@ export const createTrsMat4Cache = <
  *
  * Returns a matrix intended for `projectPoint3` (includes perspective divide).
  */
+export const mat4PerspectiveUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  DepthUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  fieldOfViewYRadians: number,
+  aspect: number,
+  near: Quantity<DepthUnit>,
+  far: Quantity<NoInfer<DepthUnit>>,
+): ProjectionMat4<ToFrame, FromFrame, DepthUnit> => {
+  void toFrameTag;
+  void fromFrameTag;
+
+  const f = 1 / Math.tan(fieldOfViewYRadians * 0.5);
+  const rangeInverse = 1 / (near - far);
+
+  return asProjectionMat4<ToFrame, FromFrame, DepthUnit>([
+    f / aspect,
+    0,
+    0,
+    0,
+    0,
+    f,
+    0,
+    0,
+    0,
+    0,
+    (far + near) * rangeInverse,
+    (2 * far * near) * rangeInverse,
+    0,
+    0,
+    -1,
+    0,
+  ]);
+};
+
+/**
+ * Builds a right-handed perspective projection matrix.
+ *
+ * Returns a matrix intended for `projectPoint3` (includes perspective divide).
+ */
 export const mat4Perspective = <
   ToFrame extends string,
   FromFrame extends string,
@@ -461,27 +573,49 @@ export const mat4Perspective = <
     throw new Error('near and far must satisfy 0 < near < far');
   }
 
-  const f = 1 / Math.tan(fieldOfViewYRadians * 0.5);
-  const rangeInverse = 1 / (near - far);
+  return mat4PerspectiveUnsafe(
+    toFrameTag,
+    fromFrameTag,
+    fieldOfViewYRadians,
+    aspect,
+    near,
+    far,
+  );
+};
 
-  return asProjectionMat4<ToFrame, FromFrame, DepthUnit>([
-    f / aspect,
-    0,
-    0,
-    0,
-    0,
-    f,
-    0,
-    0,
-    0,
-    0,
-    (far + near) * rangeInverse,
-    (2 * far * near) * rangeInverse,
-    0,
-    0,
-    -1,
-    0,
-  ]);
+/**
+ * Projects a point with a perspective matrix and performs perspective divide.
+ *
+ * Unsafe variant: performs no `w === 0` guard.
+ * Degenerate inputs can yield `NaN`/`Infinity`.
+ */
+export const projectPoint3Unsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  DepthUnit extends UnitExpr,
+>(
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
+  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+): Point3<Dimensionless, ToFrame> => {
+  const x = point[0];
+  const y = point[1];
+  const z = point[2];
+
+  const clipX = projection[0] * x + projection[1] * y + projection[2] * z +
+    projection[3];
+  const clipY = projection[4] * x + projection[5] * y + projection[6] * z +
+    projection[7];
+  const clipZ = projection[8] * x + projection[9] * y + projection[10] * z +
+    projection[11];
+  const clipW = projection[12] * x + projection[13] * y + projection[14] * z +
+    projection[15];
+
+  const invW = 1 / clipW;
+  return asPoint3<Dimensionless, ToFrame>(
+    asQuantity<Dimensionless>(clipX * invW),
+    asQuantity<Dimensionless>(clipY * invW),
+    asQuantity<Dimensionless>(clipZ * invW),
+  );
 };
 
 /**
@@ -514,12 +648,85 @@ export const projectPoint3 = <
     throw new Error('Perspective divide is undefined for w = 0');
   }
 
-  const invW = 1 / clipW;
-  return asPoint3<Dimensionless, ToFrame>(
-    asQuantity<Dimensionless>(clipX * invW),
-    asQuantity<Dimensionless>(clipY * invW),
-    asQuantity<Dimensionless>(clipZ * invW),
-  );
+  return projectPoint3Unsafe(projection, point);
+};
+
+/**
+ * Builds a world-to-view pose matrix from eye, target, and up direction.
+ *
+ * Unsafe variant: performs no degeneracy checks on eye/target/up.
+ */
+export const mat4LookAtUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  point_eye_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  point_target_from: Point3<TranslationUnit, NoInfer<FromFrame>>,
+  dir_up_from: Dir3<NoInfer<FromFrame>>,
+): Mat4<ToFrame, FromFrame, TranslationUnit> => {
+  void toFrameTag;
+  void fromFrameTag;
+
+  const forwardX = point_target_from[0] - point_eye_from[0];
+  const forwardY = point_target_from[1] - point_eye_from[1];
+  const forwardZ = point_target_from[2] - point_eye_from[2];
+  const forwardLength = Math.hypot(forwardX, forwardY, forwardZ);
+  const dir_forward_x = forwardX / forwardLength;
+  const dir_forward_y = forwardY / forwardLength;
+  const dir_forward_z = forwardZ / forwardLength;
+
+  const upLength = Math.hypot(dir_up_from[0], dir_up_from[1], dir_up_from[2]);
+  const upX = dir_up_from[0] / upLength;
+  const upY = dir_up_from[1] / upLength;
+  const upZ = dir_up_from[2] / upLength;
+
+  const rightX = dir_forward_y * upZ - dir_forward_z * upY;
+  const rightY = dir_forward_z * upX - dir_forward_x * upZ;
+  const rightZ = dir_forward_x * upY - dir_forward_y * upX;
+  const rightLength = Math.hypot(rightX, rightY, rightZ);
+
+  const dir_right_x = rightX / rightLength;
+  const dir_right_y = rightY / rightLength;
+  const dir_right_z = rightZ / rightLength;
+
+  const dir_up_orthogonal_x = dir_right_y * dir_forward_z -
+    dir_right_z * dir_forward_y;
+  const dir_up_orthogonal_y = dir_right_z * dir_forward_x -
+    dir_right_x * dir_forward_z;
+  const dir_up_orthogonal_z = dir_right_x * dir_forward_y -
+    dir_right_y * dir_forward_x;
+
+  const tx = -(dir_right_x * point_eye_from[0] +
+    dir_right_y * point_eye_from[1] +
+    dir_right_z * point_eye_from[2]);
+  const ty = -(dir_up_orthogonal_x * point_eye_from[0] +
+    dir_up_orthogonal_y * point_eye_from[1] +
+    dir_up_orthogonal_z * point_eye_from[2]);
+  const tz = dir_forward_x * point_eye_from[0] +
+    dir_forward_y * point_eye_from[1] +
+    dir_forward_z * point_eye_from[2];
+
+  return asMat4<ToFrame, FromFrame, TranslationUnit>([
+    dir_right_x,
+    dir_right_y,
+    dir_right_z,
+    asQuantity<TranslationUnit>(tx),
+    dir_up_orthogonal_x,
+    dir_up_orthogonal_y,
+    dir_up_orthogonal_z,
+    asQuantity<TranslationUnit>(ty),
+    -dir_forward_x,
+    -dir_forward_y,
+    -dir_forward_z,
+    asQuantity<TranslationUnit>(tz),
+    0,
+    0,
+    0,
+    1,
+  ]);
 };
 
 /**
@@ -569,45 +776,13 @@ export const mat4LookAt = <
     throw new Error('LookAt up direction cannot be parallel to forward');
   }
 
-  const dir_right_x = rightX / rightLength;
-  const dir_right_y = rightY / rightLength;
-  const dir_right_z = rightZ / rightLength;
-
-  const dir_up_orthogonal_x = dir_right_y * dir_forward_z -
-    dir_right_z * dir_forward_y;
-  const dir_up_orthogonal_y = dir_right_z * dir_forward_x -
-    dir_right_x * dir_forward_z;
-  const dir_up_orthogonal_z = dir_right_x * dir_forward_y -
-    dir_right_y * dir_forward_x;
-
-  const tx = -(dir_right_x * point_eye_from[0] +
-    dir_right_y * point_eye_from[1] +
-    dir_right_z * point_eye_from[2]);
-  const ty = -(dir_up_orthogonal_x * point_eye_from[0] +
-    dir_up_orthogonal_y * point_eye_from[1] +
-    dir_up_orthogonal_z * point_eye_from[2]);
-  const tz = dir_forward_x * point_eye_from[0] +
-    dir_forward_y * point_eye_from[1] +
-    dir_forward_z * point_eye_from[2];
-
-  return asMat4<ToFrame, FromFrame, TranslationUnit>([
-    dir_right_x,
-    dir_right_y,
-    dir_right_z,
-    asQuantity<TranslationUnit>(tx),
-    dir_up_orthogonal_x,
-    dir_up_orthogonal_y,
-    dir_up_orthogonal_z,
-    asQuantity<TranslationUnit>(ty),
-    -dir_forward_x,
-    -dir_forward_y,
-    -dir_forward_z,
-    asQuantity<TranslationUnit>(tz),
-    0,
-    0,
-    0,
-    1,
-  ]);
+  return mat4LookAtUnsafe(
+    toFrameTag,
+    fromFrameTag,
+    point_eye_from,
+    point_target_from,
+    dir_up_from,
+  );
 };
 
 /** Transposes any matrix while swapping frame direction. */
@@ -795,7 +970,7 @@ const assertRigidTransform = (
 };
 
 /** Inverts a linear matrix while preserving linear typing. */
-export function invertRigidMat4<
+export function invertRigidMat4Unsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
@@ -803,11 +978,9 @@ export function invertRigidMat4<
 ): LinearMat4<FromFrame, ToFrame>;
 
 /**
- * Inverts a rigid affine matrix.
- *
- * Throws when matrix fails rigid transform validation.
+ * Inverts a rigid affine matrix without validation.
  */
-export function invertRigidMat4<
+export function invertRigidMat4Unsafe<
   ToFrame extends string,
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
@@ -815,15 +988,13 @@ export function invertRigidMat4<
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Mat4<FromFrame, ToFrame, TranslationUnit>;
 
-export function invertRigidMat4<
+export function invertRigidMat4Unsafe<
   ToFrame extends string,
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
 >(
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Mat4<FromFrame, ToFrame, TranslationUnit> {
-  assertRigidTransform(value, 1e-10);
-
   const r00 = value[0];
   const r01 = value[1];
   const r02 = value[2];
@@ -862,6 +1033,95 @@ export function invertRigidMat4<
   ]);
 }
 
+/** Inverts a linear matrix while preserving linear typing. */
+export function invertRigidMat4<
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  value: LinearMat4<ToFrame, FromFrame>,
+): LinearMat4<FromFrame, ToFrame>;
+
+/**
+ * Inverts a rigid affine matrix.
+ *
+ * Throws when matrix fails rigid transform validation.
+ */
+export function invertRigidMat4<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Mat4<FromFrame, ToFrame, TranslationUnit>;
+
+export function invertRigidMat4<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Mat4<FromFrame, ToFrame, TranslationUnit> {
+  assertRigidTransform(value, 1e-10);
+  return invertRigidMat4Unsafe(value);
+}
+
+/**
+ * Builds a normal matrix (inverse-transpose of upper-left 3x3 linear part).
+ *
+ * Unsafe variant: performs no singularity guard.
+ * Degenerate inputs can yield `NaN`/`Infinity`.
+ */
+export const normalMatrixFromMat4Unsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): LinearMat4<ToFrame, FromFrame> => {
+  const a = value[0];
+  const b = value[1];
+  const c = value[2];
+  const d = value[4];
+  const e = value[5];
+  const f = value[6];
+  const g = value[8];
+  const h = value[9];
+  const i = value[10];
+
+  const co00 = e * i - f * h;
+  const co01 = c * h - b * i;
+  const co02 = b * f - c * e;
+  const co10 = f * g - d * i;
+  const co11 = a * i - c * g;
+  const co12 = c * d - a * f;
+  const co20 = d * h - e * g;
+  const co21 = b * g - a * h;
+  const co22 = a * e - b * d;
+  const determinant = a * co00 + b * co10 + c * co20;
+  const inverseDeterminant = 1 / determinant;
+
+  return asLinearMat4(
+    asMat4<ToFrame, FromFrame, Dimensionless>([
+      co00 * inverseDeterminant,
+      co10 * inverseDeterminant,
+      co20 * inverseDeterminant,
+      0,
+      co01 * inverseDeterminant,
+      co11 * inverseDeterminant,
+      co21 * inverseDeterminant,
+      0,
+      co02 * inverseDeterminant,
+      co12 * inverseDeterminant,
+      co22 * inverseDeterminant,
+      0,
+      0,
+      0,
+      0,
+      1,
+    ]),
+  );
+};
+
 /**
  * Builds a normal matrix (inverse-transpose of upper-left 3x3 linear part).
  *
@@ -899,27 +1159,7 @@ export const normalMatrixFromMat4 = <
     throw new Error('Cannot build a normal matrix from a singular transform');
   }
 
-  const inverseDeterminant = 1 / determinant;
-  return asLinearMat4(
-    asMat4<ToFrame, FromFrame, Dimensionless>([
-      co00 * inverseDeterminant,
-      co10 * inverseDeterminant,
-      co20 * inverseDeterminant,
-      0,
-      co01 * inverseDeterminant,
-      co11 * inverseDeterminant,
-      co21 * inverseDeterminant,
-      0,
-      co02 * inverseDeterminant,
-      co12 * inverseDeterminant,
-      co22 * inverseDeterminant,
-      0,
-      0,
-      0,
-      0,
-      1,
-    ]),
-  );
+  return normalMatrixFromMat4Unsafe(value);
 };
 
 /**
