@@ -95,7 +95,7 @@ const pose_LV = mat4FromRigidTransform(
   delta_offset_L,
 );
 
-const point_L = transformPoint3(pose_LV, point_V);
+const point_L = transformPoint3(point_V, pose_LV);
 ```
 
 ## Common usage patterns
@@ -150,14 +150,13 @@ const point_L = transformPoint3(pose_LV, point_V);
 Examples:
 
 - `pose_LV: Mat4<'L', 'V', 'm'>` maps points in `V` to `L`, so:
-  `point_L = transformPoint3(pose_LV, point_V)`.
+  `point_L = transformPoint3(point_V, pose_LV)`.
 - `quat_turn_LV: Quaternion<'L', 'V'>` rotates vectors from `V` into `L`.
 - `delta_local: Delta3<'m', 'local'>` represents a translation/displacement in
   `local`.
 - `pose_local_vehicle: Mat4<'local', 'vehicle', 'm'>` maps points in `vehicle`
   to `local`.
-- `composeMat4(pose_BV, pose_LB)` returns `pose_LV` (apply `V -> B`, then
-  `B -> L`).
+- `composeMat4(pose_LB, pose_BV)` returns `pose_LV` (chain `L <- B <- V`).
 
 ## Full API reference
 

@@ -594,8 +594,8 @@ export const projectPoint3Unsafe = <
   FromFrame extends string,
   DepthUnit extends UnitExpr,
 >(
-  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
 ): Point3<Dimensionless, ToFrame> => {
   const x = point[0];
   const y = point[1];
@@ -628,27 +628,17 @@ export const projectPoint3 = <
   FromFrame extends string,
   DepthUnit extends UnitExpr,
 >(
-  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
 ): Point3<Dimensionless, ToFrame> => {
-  const x = point[0];
-  const y = point[1];
-  const z = point[2];
-
-  const clipX = projection[0] * x + projection[1] * y + projection[2] * z +
-    projection[3];
-  const clipY = projection[4] * x + projection[5] * y + projection[6] * z +
-    projection[7];
-  const clipZ = projection[8] * x + projection[9] * y + projection[10] * z +
-    projection[11];
-  const clipW = projection[12] * x + projection[13] * y + projection[14] * z +
-    projection[15];
+  const clipW = projection[12] * point[0] + projection[13] * point[1] +
+    projection[14] * point[2] + projection[15];
 
   if (clipW === 0) {
     throw new Error('Perspective divide is undefined for w = 0');
   }
 
-  return projectPoint3Unsafe(projection, point);
+  return projectPoint3Unsafe(point, projection);
 };
 
 /**
@@ -846,23 +836,25 @@ const multiplyRaw = (
 };
 
 /**
- * Composes two linear transforms.
+ * Composes two linear transforms in chain order.
  *
- * Order: apply `first`, then apply `second`.
+ * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export function composeMat4<
   ToFrame extends string,
   ViaFrame extends string,
   FromFrame extends string,
 >(
-  first: LinearMat4<ViaFrame, FromFrame>,
-  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+  outer: LinearMat4<ToFrame, ViaFrame>,
+  inner: LinearMat4<NoInfer<ViaFrame>, FromFrame>,
 ): LinearMat4<ToFrame, FromFrame>;
 
 /**
- * Composes linear then affine transform.
+ * Composes affine outer with linear inner in chain order.
  *
- * Order: apply `first`, then apply `second`.
+ * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -870,14 +862,15 @@ export function composeMat4<
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
 >(
-  first: LinearMat4<ViaFrame, FromFrame>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, TranslationUnit>,
+  outer: Mat4<ToFrame, ViaFrame, TranslationUnit>,
+  inner: LinearMat4<NoInfer<ViaFrame>, FromFrame>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>;
 
 /**
- * Composes affine then linear transform.
+ * Composes linear outer with affine inner in chain order.
  *
- * Order: apply `first`, then apply `second`.
+ * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -885,14 +878,15 @@ export function composeMat4<
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
 >(
-  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
-  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+  outer: LinearMat4<ToFrame, ViaFrame>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, TranslationUnit>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>;
 
 /**
- * Composes affine transforms with matching translation units.
+ * Composes affine transforms with matching translation units in chain order.
  *
- * Order: apply `first`, then apply `second`.
+ * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -900,15 +894,16 @@ export function composeMat4<
   FromFrame extends string,
   TranslationUnit extends UnitExpr,
 >(
-  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, NoInfer<TranslationUnit>>,
+  outer: Mat4<ToFrame, ViaFrame, TranslationUnit>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, NoInfer<TranslationUnit>>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>;
 
 /**
- * Composes affine transforms with different translation units.
+ * Composes affine transforms with different translation units in chain order.
  *
  * Result translation unit is widened to `UnitExpr`.
- * Order: apply `first`, then apply `second`.
+ * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -917,10 +912,10 @@ export function composeMat4<
   LeftTranslationUnit extends UnitExpr,
   RightTranslationUnit extends UnitExpr,
 >(
-  first: Mat4<ViaFrame, FromFrame, LeftTranslationUnit>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, RightTranslationUnit>,
+  outer: Mat4<ToFrame, ViaFrame, LeftTranslationUnit>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, RightTranslationUnit>,
 ): Mat4<ToFrame, FromFrame, UnitExpr> {
-  return asMat4<ToFrame, FromFrame, UnitExpr>(multiplyRaw(second, first));
+  return asMat4<ToFrame, FromFrame, UnitExpr>(multiplyRaw(outer, inner));
 }
 
 const isApproximately = (
@@ -1145,14 +1140,8 @@ export const normalMatrixFromMat4 = <
   const i = value[10];
 
   const co00 = e * i - f * h;
-  const co01 = c * h - b * i;
-  const co02 = b * f - c * e;
   const co10 = f * g - d * i;
-  const co11 = a * i - c * g;
-  const co12 = c * d - a * f;
   const co20 = d * h - e * g;
-  const co21 = b * g - a * h;
-  const co22 = a * e - b * d;
 
   const determinant = a * co00 + b * co10 + c * co20;
   if (determinant === 0) {
@@ -1172,8 +1161,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
   point: Point3<NoInfer<TranslationUnit>, NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Point3<TranslationUnit, ToFrame>;
 
 /**
@@ -1186,8 +1175,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: LinearMat4<ToFrame, FromFrame>,
   point: Point3<Unit, NoInfer<FromFrame>>,
+  matrix: LinearMat4<ToFrame, FromFrame>,
 ): Point3<Unit, ToFrame>;
 
 export function transformPoint3<
@@ -1196,8 +1185,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   point: Point3<Unit, NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Point3<Unit, ToFrame> {
   const x = point[0];
   const y = point[1];
@@ -1223,8 +1212,8 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   direction: Delta3<Unit, NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Delta3<Unit, ToFrame>;
 
 /** Transforms a unitless direction while preserving direction typing. */
@@ -1233,8 +1222,8 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   direction: Dir3<NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Dir3<ToFrame>;
 
 export function transformDirection3<
@@ -1243,8 +1232,8 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   direction: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   const x = direction[0];
   const y = direction[1];

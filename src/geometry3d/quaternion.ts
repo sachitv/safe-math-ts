@@ -141,20 +141,21 @@ export const quatInverse = <ToFrame extends string, FromFrame extends string>(
 };
 
 /**
- * Composes two frame-compatible quaternions.
+ * Composes two frame-compatible quaternions in chain order.
  *
- * Order: apply `first`, then apply `second`.
+ * `composeQuats(outer, inner)` returns `outer * inner`, so `inner` is applied
+ * first.
  */
 export const composeQuats = <
   ToFrame extends string,
   ViaFrame extends string,
   FromFrame extends string,
 >(
-  first: Quaternion<ViaFrame, FromFrame>,
-  second: Quaternion<ToFrame, NoInfer<ViaFrame>>,
+  outer: Quaternion<ToFrame, ViaFrame>,
+  inner: Quaternion<NoInfer<ViaFrame>, FromFrame>,
 ): Quaternion<ToFrame, FromFrame> => {
-  const [x1, y1, z1, w1] = first;
-  const [x2, y2, z2, w2] = second;
+  const [x1, y1, z1, w1] = inner;
+  const [x2, y2, z2, w2] = outer;
 
   return asQuaternion<ToFrame, FromFrame>(
     w2 * x1 + x2 * w1 + y2 * z1 - z2 * y1,
@@ -170,8 +171,8 @@ export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>;
 
 /** Rotates a direction from `FromFrame` into `ToFrame`. */
@@ -179,8 +180,8 @@ export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Dir3<ToFrame>;
 
 export function rotateVec3ByQuatUnsafe<
@@ -188,8 +189,8 @@ export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   const [qx, qy, qz, qw] = quatNormalizeUnsafe(rotation);
   const [vx, vy, vz] = value;
@@ -211,8 +212,8 @@ export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>;
 
 /** Rotates a direction from `FromFrame` into `ToFrame`. */
@@ -220,8 +221,8 @@ export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Dir3<ToFrame>;
 
 export function rotateVec3ByQuat<
@@ -229,13 +230,13 @@ export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   quatNormalize(rotation);
   return rotateVec3ByQuatUnsafe(
-    rotation,
     value as Delta3<Unit, NoInfer<FromFrame>>,
+    rotation,
   );
 }
 
@@ -307,7 +308,7 @@ export const quatFromEulerUnsafe = <Frame extends string>(
   let quat_result = quatIdentity(frameTag);
   for (let index = 0; index < order.length; index += 1) {
     const axis = order[index] as 'X' | 'Y' | 'Z';
-    quat_result = composeQuats(quat_result, makeAxisQuat(axis));
+    quat_result = composeQuats(makeAxisQuat(axis), quat_result);
   }
 
   return quatNormalizeUnsafe(quat_result);

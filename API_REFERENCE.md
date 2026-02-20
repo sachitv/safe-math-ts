@@ -261,26 +261,26 @@ quatInverse<ToFrame extends string, FromFrame extends string>(
 ): Quaternion<FromFrame, ToFrame>
 
 composeQuats<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(
-  first: Quaternion<ViaFrame, FromFrame>,
-  second: Quaternion<ToFrame, NoInfer<ViaFrame>>,
+  outer: Quaternion<ToFrame, ViaFrame>,
+  inner: Quaternion<NoInfer<ViaFrame>, FromFrame>,
 ): Quaternion<ToFrame, FromFrame>
 
 rotateVec3ByQuatUnsafe<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>
 rotateVec3ByQuatUnsafe<ToFrame extends string, FromFrame extends string>(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Dir3<ToFrame>
 
 rotateVec3ByQuat<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Delta3<Unit, NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>
 rotateVec3ByQuat<ToFrame extends string, FromFrame extends string>(
-  rotation: Quaternion<ToFrame, FromFrame>,
   value: Dir3<NoInfer<FromFrame>>,
+  rotation: Quaternion<ToFrame, FromFrame>,
 ): Dir3<ToFrame>
 
 quatFromAxisAngleUnsafe<Frame extends string>(
@@ -427,12 +427,12 @@ mat4Perspective<ToFrame extends string, FromFrame extends string, DepthUnit exte
 ): ProjectionMat4<ToFrame, FromFrame, DepthUnit>
 
 projectPoint3Unsafe<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
-  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
 ): Point3<Dimensionless, ToFrame>
 projectPoint3<ToFrame extends string, FromFrame extends string, DepthUnit extends UnitExpr>(
-  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
+  projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
 ): Point3<Dimensionless, ToFrame>
 
 mat4LookAtUnsafe<ToFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
@@ -458,24 +458,24 @@ transposeMat4<ToFrame extends string, FromFrame extends string>(
 ): LinearMat4<FromFrame, ToFrame>
 
 composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string>(
-  first: LinearMat4<ViaFrame, FromFrame>,
-  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+  outer: LinearMat4<ToFrame, ViaFrame>,
+  inner: LinearMat4<NoInfer<ViaFrame>, FromFrame>,
 ): LinearMat4<ToFrame, FromFrame>
 composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
-  first: LinearMat4<ViaFrame, FromFrame>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, TranslationUnit>,
+  outer: Mat4<ToFrame, ViaFrame, TranslationUnit>,
+  inner: LinearMat4<NoInfer<ViaFrame>, FromFrame>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>
 composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
-  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
-  second: LinearMat4<ToFrame, NoInfer<ViaFrame>>,
+  outer: LinearMat4<ToFrame, ViaFrame>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, TranslationUnit>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>
 composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, TranslationUnit extends UnitExpr>(
-  first: Mat4<ViaFrame, FromFrame, TranslationUnit>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, NoInfer<TranslationUnit>>,
+  outer: Mat4<ToFrame, ViaFrame, TranslationUnit>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, NoInfer<TranslationUnit>>,
 ): Mat4<ToFrame, FromFrame, TranslationUnit>
 composeMat4<ToFrame extends string, ViaFrame extends string, FromFrame extends string, LeftTranslationUnit extends UnitExpr, RightTranslationUnit extends UnitExpr>(
-  first: Mat4<ViaFrame, FromFrame, LeftTranslationUnit>,
-  second: Mat4<ToFrame, NoInfer<ViaFrame>, RightTranslationUnit>,
+  outer: Mat4<ToFrame, ViaFrame, LeftTranslationUnit>,
+  inner: Mat4<NoInfer<ViaFrame>, FromFrame, RightTranslationUnit>,
 ): Mat4<ToFrame, FromFrame, UnitExpr>
 
 invertRigidMat4Unsafe<ToFrame extends string, FromFrame extends string>(
@@ -499,21 +499,21 @@ normalMatrixFromMat4<ToFrame extends string, FromFrame extends string, Translati
 ): LinearMat4<ToFrame, FromFrame>
 
 transformPoint3<TranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
   point: Point3<NoInfer<TranslationUnit>, NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Point3<TranslationUnit, ToFrame>
 transformPoint3<Unit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  matrix: LinearMat4<ToFrame, FromFrame>,
   point: Point3<Unit, NoInfer<FromFrame>>,
+  matrix: LinearMat4<ToFrame, FromFrame>,
 ): Point3<Unit, ToFrame>
 
 transformDirection3<Unit extends UnitExpr, MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   direction: Delta3<Unit, NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Delta3<Unit, ToFrame>
 transformDirection3<MatrixTranslationUnit extends UnitExpr, ToFrame extends string, FromFrame extends string>(
-  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
   direction: Dir3<NoInfer<FromFrame>>,
+  matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Dir3<ToFrame>
 ```
 

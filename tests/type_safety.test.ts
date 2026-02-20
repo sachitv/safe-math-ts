@@ -64,7 +64,7 @@ const point_world = point3(
   quantity(meter, 2),
   quantity(meter, 3),
 );
-const point_seconds_world = point3(
+const point_other_world = point3(
   frame_world,
   quantity(second, 1),
   quantity(second, 2),
@@ -83,7 +83,7 @@ const delta_world = delta3(
   quantity(meter, 2),
   quantity(meter, 3),
 );
-const delta_seconds_world = delta3(
+const delta_other_world = delta3(
   frame_world,
   quantity(second, 1),
   quantity(second, 2),
@@ -118,7 +118,7 @@ sqrt(meters);
 addVec3(delta_world, delta_world);
 
 // @ts-expect-error unit mismatch should fail
-addVec3(delta_world, delta_seconds_world);
+addVec3(delta_world, delta_other_world);
 
 // @ts-expect-error frame mismatch should fail
 addVec3(delta_world, delta_body);
@@ -133,21 +133,21 @@ addPoint3(point_world, point_world);
 subPoint3(point_world, point_body);
 
 // @ts-expect-error point subtraction unit mismatch
-subPoint3(point_world, point_seconds_world);
+subPoint3(point_world, point_other_world);
 
 const quat_identity_body_world = quat(frame_body, frame_world, 0, 0, 0, 1);
-rotateVec3ByQuat(quat_identity_body_world, delta_world);
+rotateVec3ByQuat(delta_world, quat_identity_body_world);
 
 // @ts-expect-error wrong input frame for rotation
-rotateVec3ByQuat(quat_identity_body_world, delta_body);
+rotateVec3ByQuat(delta_body, quat_identity_body_world);
 
 const pose_world_world = mat4FromTranslation(frame_world, delta_world);
-transformPoint3(pose_world_world, point_world);
+transformPoint3(point_world, pose_world_world);
 
 // @ts-expect-error wrong point frame
-transformPoint3(pose_world_world, point_body);
+transformPoint3(point_body, pose_world_world);
 
-const pose_world_world_dimensionless = mat4(
+const pose_world_world_generic = mat4(
   frame_world,
   frame_world,
   dimensionlessUnit,
@@ -172,7 +172,7 @@ const pose_world_world_dimensionless = mat4(
 );
 
 // @ts-expect-error non-linear dimensionless matrix cannot transform unitful point
-transformPoint3(pose_world_world_dimensionless, point_world);
+transformPoint3(point_world, pose_world_world_generic);
 
 const dir_axisz_world = dir3(
   frame_world,
@@ -192,7 +192,7 @@ composeMat4(pose_world_world_rot, pose_world_world);
 quatFromAxisAngle(frame_world, delta_world, Math.PI / 2);
 
 // @ts-expect-error unit mismatch with non-linear matrix should fail composition
-composeMat4(pose_world_world_dimensionless, pose_world_world);
+composeMat4(pose_world_world_generic, pose_world_world);
 
 Deno.test('type-safety compile checks are loaded', () => {
   assert(true);

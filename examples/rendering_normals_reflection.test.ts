@@ -1,0 +1,101 @@
+import {
+  angleBetweenVec3,
+  delta3,
+  dimensionlessUnit,
+  dir3,
+  dotVec3,
+  frame,
+  mat4FromTRS,
+  negVec3,
+  normalizeVec3,
+  normalMatrixFromMat4,
+  quantity,
+  quat,
+  reflectVec3,
+  scaleDir3,
+  transformDirection3,
+  unit,
+} from '../mod.ts';
+import { assert, assertAlmostEquals } from '../tests/assert.test.ts';
+
+Deno.test('example: transform normals and reflect an incoming direction', () => {
+  const frame_world = frame('world');
+  const frame_object = frame('object');
+  const meter = unit('m');
+
+  const sin15 = Math.sin(Math.PI / 12);
+  const cos15 = Math.cos(Math.PI / 12);
+
+  const delta_offset_world = delta3(
+    frame_world,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const quat_tilt_world_object = quat(
+    frame_world,
+    frame_object,
+    0,
+    sin15,
+    0,
+    cos15,
+  );
+  const dir_scale_object = dir3(
+    frame_object,
+    quantity(dimensionlessUnit, 2),
+    quantity(dimensionlessUnit, 1),
+    quantity(dimensionlessUnit, 0.5),
+  );
+
+  const pose_world_object = mat4FromTRS(
+    frame_world,
+    frame_object,
+    delta_offset_world,
+    quat_tilt_world_object,
+    dir_scale_object,
+  );
+  const pose_normal_world_object = normalMatrixFromMat4(pose_world_object);
+
+  const dir_normal_object = dir3(
+    frame_object,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+  const delta_normal_world = transformDirection3(
+    dir_normal_object,
+    pose_normal_world_object,
+  );
+  const dir_normal_world = normalizeVec3(delta_normal_world);
+
+  const delta_incoming_world = delta3(
+    frame_world,
+    quantity(meter, 0.5),
+    quantity(meter, -1),
+    quantity(meter, -0.5),
+  );
+  const delta_reflected_world = reflectVec3(
+    delta_incoming_world,
+    dir_normal_world,
+  );
+
+  const delta_normal_world_ref = scaleDir3(
+    dir_normal_world,
+    quantity(meter, 1),
+  );
+  const angle_incidence = angleBetweenVec3(
+    negVec3(delta_incoming_world),
+    delta_normal_world_ref,
+  );
+  const angle_reflection = angleBetweenVec3(
+    delta_reflected_world,
+    delta_normal_world_ref,
+  );
+  assertAlmostEquals(angle_incidence, angle_reflection, 1e-10);
+
+  const normal_component = dotVec3(
+    delta_reflected_world,
+    delta_normal_world_ref,
+  );
+  assert(normal_component > 0);
+});
