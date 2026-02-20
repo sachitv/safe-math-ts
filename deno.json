@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    }
+  },
+  "tasks": {
+    "check": "deno check mod.ts",
+    "test": "deno test --coverage=coverage --coverage-raw-data-only",
+    "coverage": "deno coverage coverage",
+    "bench": "deno bench --no-check benchmarks"
+  },
+  "fmt": {
+    "singleQuote": true,
+    "semiColons": true
+  }
+}
