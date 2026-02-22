@@ -4,9 +4,24 @@ import { normalizeVec3, normalizeVec3Unsafe } from './vector3.ts';
 
 const NEAR_ZERO = 1e-14;
 
+/**
+ * Casts a raw number into a branded quantity.
+ *
+ * @param value Raw numeric scalar.
+ * @returns Branded quantity.
+ */
 const asQuantity = <Unit extends UnitExpr>(value: number): Quantity<Unit> =>
   value as Quantity<Unit>;
 
+/**
+ * Casts xyzw components to a branded quaternion.
+ *
+ * @param x Quaternion x component.
+ * @param y Quaternion y component.
+ * @param z Quaternion z component.
+ * @param w Quaternion w component.
+ * @returns Branded quaternion.
+ */
 const asQuaternion = <ToFrame extends string, FromFrame extends string>(
   x: number,
   y: number,
@@ -22,6 +37,14 @@ export type EulerOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
  * Constructs a frame-aware quaternion.
  *
  * `toFrameTag` and `fromFrameTag` are required to enforce explicit frame declaration.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param x Quaternion x component.
+ * @param y Quaternion y component.
+ * @param z Quaternion z component.
+ * @param w Quaternion w component.
+ * @returns Quaternion in `<ToFrame, FromFrame>` order.
  */
 export const quat = <ToFrame extends string, FromFrame extends string>(
   toFrameTag: FrameTag<ToFrame>,
@@ -36,7 +59,12 @@ export const quat = <ToFrame extends string, FromFrame extends string>(
   return asQuaternion<ToFrame, FromFrame>(x, y, z, w);
 };
 
-/** Returns identity quaternion for a frame. */
+/**
+ * Returns identity quaternion for a frame.
+ *
+ * @param frameTag Frame token.
+ * @returns Identity rotation for the frame.
+ */
 export const quatIdentity = <Frame extends string>(
   frameTag: FrameTag<Frame>,
 ): Quaternion<Frame, Frame> => {
@@ -44,13 +72,23 @@ export const quatIdentity = <Frame extends string>(
   return asQuaternion<Frame, Frame>(0, 0, 0, 1);
 };
 
-/** Computes quaternion conjugate. */
+/**
+ * Computes quaternion conjugate.
+ *
+ * @param value Input quaternion.
+ * @returns Conjugated quaternion with swapped frame direction.
+ */
 export const quatConjugate = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): Quaternion<FromFrame, ToFrame> =>
   asQuaternion<FromFrame, ToFrame>(-value[0], -value[1], -value[2], value[3]);
 
-/** Computes squared quaternion norm. */
+/**
+ * Computes squared quaternion norm.
+ *
+ * @param value Input quaternion.
+ * @returns Squared norm.
+ */
 export const quatNormSquared = <
   ToFrame extends string,
   FromFrame extends string,
@@ -60,7 +98,12 @@ export const quatNormSquared = <
   value[0] * value[0] + value[1] * value[1] + value[2] * value[2] +
   value[3] * value[3];
 
-/** Computes quaternion norm. */
+/**
+ * Computes quaternion norm.
+ *
+ * @param value Input quaternion.
+ * @returns Euclidean norm.
+ */
 export const quatNorm = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): number => Math.sqrt(quatNormSquared(value));
@@ -70,6 +113,9 @@ export const quatNorm = <ToFrame extends string, FromFrame extends string>(
  *
  * Unsafe variant: performs no zero-length guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
+ *
+ * @param value Quaternion to normalize.
+ * @returns Unit quaternion.
  */
 export const quatNormalizeUnsafe = <
   ToFrame extends string,
@@ -90,6 +136,10 @@ export const quatNormalizeUnsafe = <
  * Normalizes quaternion length to 1.
  *
  * Throws when quaternion norm is zero.
+ *
+ * @param value Quaternion to normalize.
+ * @returns Unit quaternion.
+ * @throws {Error} When the quaternion is near zero length.
  */
 export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
@@ -107,6 +157,9 @@ export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
  *
  * Unsafe variant: performs no zero-length guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
+ *
+ * @param value Quaternion to invert.
+ * @returns Inverse quaternion in swapped frame direction.
  */
 export const quatInverseUnsafe = <
   ToFrame extends string,
@@ -128,6 +181,10 @@ export const quatInverseUnsafe = <
  * Computes quaternion inverse.
  *
  * Throws when quaternion norm is zero.
+ *
+ * @param value Quaternion to invert.
+ * @returns Inverse quaternion in swapped frame direction.
+ * @throws {Error} When the quaternion is near zero length.
  */
 export const quatInverse = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
@@ -145,6 +202,10 @@ export const quatInverse = <ToFrame extends string, FromFrame extends string>(
  *
  * `composeQuats(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer rotation.
+ * @param inner Inner rotation.
+ * @returns Composed rotation `outer * inner`.
  */
 export const composeQuats = <
   ToFrame extends string,
@@ -165,7 +226,13 @@ export const composeQuats = <
   );
 };
 
-/** Rotates a vector from `FromFrame` into `ToFrame`. */
+/**
+ * Rotates a displacement vector from `FromFrame` into `ToFrame`.
+ *
+ * @param value Displacement to rotate.
+ * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @returns Rotated displacement in `ToFrame`.
+ */
 export function rotateVec3ByQuatUnsafe<
   Unit extends UnitExpr,
   ToFrame extends string,
@@ -175,7 +242,13 @@ export function rotateVec3ByQuatUnsafe<
   rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>;
 
-/** Rotates a direction from `FromFrame` into `ToFrame`. */
+/**
+ * Rotates a direction vector from `FromFrame` into `ToFrame`.
+ *
+ * @param value Direction to rotate.
+ * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @returns Rotated direction in `ToFrame`.
+ */
 export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
@@ -206,7 +279,13 @@ export function rotateVec3ByQuatUnsafe<
   ] as unknown as Delta3<Unit, ToFrame> | Dir3<ToFrame>;
 }
 
-/** Rotates a vector from `FromFrame` into `ToFrame`. */
+/**
+ * Rotates a displacement vector from `FromFrame` into `ToFrame`.
+ *
+ * @param value Displacement to rotate.
+ * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @returns Rotated displacement in `ToFrame`.
+ */
 export function rotateVec3ByQuat<
   Unit extends UnitExpr,
   ToFrame extends string,
@@ -216,7 +295,13 @@ export function rotateVec3ByQuat<
   rotation: Quaternion<ToFrame, FromFrame>,
 ): Delta3<Unit, ToFrame>;
 
-/** Rotates a direction from `FromFrame` into `ToFrame`. */
+/**
+ * Rotates a direction vector from `FromFrame` into `ToFrame`.
+ *
+ * @param value Direction to rotate.
+ * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @returns Rotated direction in `ToFrame`.
+ */
 export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
@@ -245,6 +330,11 @@ export function rotateVec3ByQuat<
  *
  * Axis is normalized internally.
  * Unsafe variant: performs no zero-length guard for `axis`.
+ *
+ * @param frameTag Frame token.
+ * @param axis Rotation axis.
+ * @param angleRadians Rotation angle in radians.
+ * @returns Quaternion in `<Frame, Frame>` order.
  */
 export const quatFromAxisAngleUnsafe = <Frame extends string>(
   frameTag: FrameTag<Frame>,
@@ -270,6 +360,12 @@ export const quatFromAxisAngleUnsafe = <Frame extends string>(
  *
  * Axis is normalized internally.
  * Throws when axis has zero length.
+ *
+ * @param frameTag Frame token.
+ * @param axis Rotation axis.
+ * @param angleRadians Rotation angle in radians.
+ * @returns Quaternion in `<Frame, Frame>` order.
+ * @throws {Error} When `axis` is near zero length.
  */
 export const quatFromAxisAngle = <Frame extends string>(
   frameTag: FrameTag<Frame>,
@@ -280,7 +376,16 @@ export const quatFromAxisAngle = <Frame extends string>(
   return quatFromAxisAngleUnsafe(frameTag, axis, angleRadians);
 };
 
-/** Builds a frame-local quaternion from Euler angles and explicit axis order. */
+/**
+ * Builds a frame-local quaternion from Euler angles and explicit axis order.
+ *
+ * @param frameTag Frame token.
+ * @param xRadians Rotation around X axis in radians.
+ * @param yRadians Rotation around Y axis in radians.
+ * @param zRadians Rotation around Z axis in radians.
+ * @param order Euler axis composition order.
+ * @returns Quaternion in `<Frame, Frame>` order.
+ */
 export const quatFromEulerUnsafe = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   xRadians: number,
@@ -314,7 +419,16 @@ export const quatFromEulerUnsafe = <Frame extends string>(
   return quatNormalizeUnsafe(quat_result);
 };
 
-/** Builds a frame-local quaternion from Euler angles and explicit axis order. */
+/**
+ * Builds a frame-local quaternion from Euler angles and explicit axis order.
+ *
+ * @param frameTag Frame token.
+ * @param xRadians Rotation around X axis in radians.
+ * @param yRadians Rotation around Y axis in radians.
+ * @param zRadians Rotation around Z axis in radians.
+ * @param order Euler axis composition order.
+ * @returns Normalized quaternion in `<Frame, Frame>` order.
+ */
 export const quatFromEuler = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   xRadians: number,
@@ -332,7 +446,14 @@ export const quatFromEuler = <Frame extends string>(
   return quatNormalize(quat_result);
 };
 
-/** Normalized linear interpolation with shortest-path hemisphere selection. */
+/**
+ * Normalized linear interpolation with shortest-path hemisphere selection.
+ *
+ * @param start Start quaternion.
+ * @param end End quaternion.
+ * @param t Interpolation parameter.
+ * @returns Interpolated normalized quaternion.
+ */
 export const quatNlerpUnsafe = <
   ToFrame extends string,
   FromFrame extends string,
@@ -366,7 +487,14 @@ export const quatNlerpUnsafe = <
   );
 };
 
-/** Normalized linear interpolation with shortest-path hemisphere selection. */
+/**
+ * Normalized linear interpolation with shortest-path hemisphere selection.
+ *
+ * @param start Start quaternion.
+ * @param end End quaternion.
+ * @param t Interpolation parameter.
+ * @returns Interpolated normalized quaternion.
+ */
 export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
   start: Quaternion<ToFrame, FromFrame>,
   end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,
@@ -397,7 +525,14 @@ export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
   return quatNlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
 };
 
-/** Spherical interpolation with shortest-path hemisphere selection. */
+/**
+ * Spherical interpolation with shortest-path hemisphere selection.
+ *
+ * @param start Start quaternion.
+ * @param end End quaternion.
+ * @param t Interpolation parameter.
+ * @returns Interpolated normalized quaternion.
+ */
 export const quatSlerpUnsafe = <
   ToFrame extends string,
   FromFrame extends string,
@@ -442,7 +577,14 @@ export const quatSlerpUnsafe = <
   );
 };
 
-/** Spherical interpolation with shortest-path hemisphere selection. */
+/**
+ * Spherical interpolation with shortest-path hemisphere selection.
+ *
+ * @param start Start quaternion.
+ * @param end End quaternion.
+ * @param t Interpolation parameter.
+ * @returns Interpolated normalized quaternion.
+ */
 export const quatSlerp = <ToFrame extends string, FromFrame extends string>(
   start: Quaternion<ToFrame, FromFrame>,
   end: Quaternion<NoInfer<ToFrame>, NoInfer<FromFrame>>,

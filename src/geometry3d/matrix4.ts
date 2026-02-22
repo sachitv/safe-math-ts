@@ -18,9 +18,21 @@ import type {
   Quaternion,
 } from './types.ts';
 
+/**
+ * Casts a raw number into a branded quantity.
+ *
+ * @param value Raw numeric scalar.
+ * @returns Branded quantity.
+ */
 const asQuantity = <Unit extends UnitExpr>(value: number): Quantity<Unit> =>
   value as Quantity<Unit>;
 
+/**
+ * Casts 16 numeric values into a branded affine matrix.
+ *
+ * @param values Matrix coefficients in row-major order.
+ * @returns Branded affine matrix.
+ */
 const asMat4 = <
   ToFrame extends string,
   FromFrame extends string,
@@ -30,11 +42,23 @@ const asMat4 = <
 ): Mat4<ToFrame, FromFrame, TranslationUnit> =>
   values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
 
+/**
+ * Narrows a dimensionless affine matrix to a linear matrix type.
+ *
+ * @param value Affine matrix with dimensionless translation slot.
+ * @returns Branded linear matrix.
+ */
 const asLinearMat4 = <ToFrame extends string, FromFrame extends string>(
   value: Mat4<ToFrame, FromFrame, Dimensionless>,
 ): LinearMat4<ToFrame, FromFrame> =>
   value as unknown as LinearMat4<ToFrame, FromFrame>;
 
+/**
+ * Casts 16 numeric values into a branded projection matrix.
+ *
+ * @param values Matrix coefficients in row-major order.
+ * @returns Branded projection matrix.
+ */
 const asProjectionMat4 = <
   ToFrame extends string,
   FromFrame extends string,
@@ -44,12 +68,28 @@ const asProjectionMat4 = <
 ): ProjectionMat4<ToFrame, FromFrame, DepthUnit> =>
   values as unknown as ProjectionMat4<ToFrame, FromFrame, DepthUnit>;
 
+/**
+ * Casts xyz components to a branded displacement tuple.
+ *
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Branded displacement.
+ */
 const asDelta3 = <Unit extends UnitExpr, Frame extends string>(
   x: Quantity<Unit>,
   y: Quantity<Unit>,
   z: Quantity<Unit>,
 ): Delta3<Unit, Frame> => [x, y, z] as unknown as Delta3<Unit, Frame>;
 
+/**
+ * Casts xyz components to a branded point tuple.
+ *
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Branded point.
+ */
 const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
   x: Quantity<Unit>,
   y: Quantity<Unit>,
@@ -62,6 +102,12 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
  * Unsafe variant: slices to 16 values without length validation.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param translationUnitTag Translation unit token.
+ * @param values Matrix coefficients in row-major order.
+ * @returns Typed affine matrix.
  */
 export const mat4Unsafe = <
   ToFrame extends string,
@@ -85,6 +131,13 @@ export const mat4Unsafe = <
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
  * Throws when `values.length !== 16`.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param translationUnitTag Translation unit token.
+ * @param values Matrix coefficients in row-major order.
+ * @returns Typed affine matrix.
+ * @throws {Error} When `values` does not contain exactly 16 entries.
  */
 export const mat4 = <
   ToFrame extends string,
@@ -107,7 +160,13 @@ export const mat4 = <
   return mat4Unsafe(toFrameTag, fromFrameTag, translationUnitTag, values);
 };
 
-/** Creates an identity linear transform for a frame. */
+/**
+ * Creates an identity linear transform for a frame.
+ *
+ * @param frameTag Frame token.
+ * @param dimensionlessUnitTag Dimensionless unit token.
+ * @returns Identity linear transform.
+ */
 export const mat4Identity = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   dimensionlessUnitTag: UnitTag<Dimensionless>,
@@ -140,7 +199,13 @@ export const mat4Identity = <Frame extends string>(
   );
 };
 
-/** Creates a pure translation matrix in a frame. */
+/**
+ * Creates a pure translation matrix in a frame.
+ *
+ * @param frameTag Frame token.
+ * @param translation Translation displacement.
+ * @returns Affine translation matrix.
+ */
 export const mat4FromTranslation = <
   TranslationUnit extends UnitExpr,
   Frame extends string,
@@ -171,7 +236,16 @@ export const mat4FromTranslation = <
     1,
   ]));
 
-/** Creates a non-uniform scale matrix in a frame. */
+/**
+ * Creates a non-uniform scale matrix in a frame.
+ *
+ * @param frameTag Frame token.
+ * @param dimensionlessUnitTag Dimensionless unit token.
+ * @param xScale X axis scale.
+ * @param yScale Y axis scale.
+ * @param zScale Z axis scale.
+ * @returns Linear scale matrix.
+ */
 export const mat4FromScale = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   dimensionlessUnitTag: UnitTag<Dimensionless>,
@@ -203,7 +277,15 @@ export const mat4FromScale = <Frame extends string>(
   );
 };
 
-/** Creates a rotation matrix from a quaternion. */
+/**
+ * Creates a rotation matrix from a quaternion.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param dimensionlessUnitTag Dimensionless unit token.
+ * @param rotation Input quaternion.
+ * @returns Linear rotation matrix.
+ */
 export const mat4FromQuaternionUnsafe = <
   ToFrame extends string,
   FromFrame extends string,
@@ -251,7 +333,16 @@ export const mat4FromQuaternionUnsafe = <
   );
 };
 
-/** Creates a rotation matrix from a quaternion. */
+/**
+ * Creates a rotation matrix from a quaternion.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param dimensionlessUnitTag Dimensionless unit token.
+ * @param rotation Input quaternion.
+ * @returns Linear rotation matrix.
+ * @throws {Error} When `rotation` is near zero length.
+ */
 export const mat4FromQuaternion = <
   ToFrame extends string,
   FromFrame extends string,
@@ -270,7 +361,15 @@ export const mat4FromQuaternion = <
   );
 };
 
-/** Builds rigid transform matrix from rotation and translation. */
+/**
+ * Builds rigid transform matrix from rotation and translation.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param rotation Rotation quaternion.
+ * @param translation Translation expressed in `toFrameTag`.
+ * @returns Affine rigid transform matrix.
+ */
 export const mat4FromRigidTransform = <
   ToFrame extends string,
   FromFrame extends string,
@@ -316,6 +415,13 @@ export const mat4FromRigidTransform = <
  *
  * Order: scale in `FromFrame`, then rotate `FromFrame -> ToFrame`, then translate
  * in `ToFrame`.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param translation Translation expressed in `toFrameTag`.
+ * @param rotation Rotation from `fromFrameTag` into `toFrameTag`.
+ * @param scale Non-uniform scale in `fromFrameTag`.
+ * @returns Affine TRS matrix.
  */
 export const mat4FromTRSUnsafe = <
   ToFrame extends string,
@@ -372,6 +478,14 @@ export const mat4FromTRSUnsafe = <
  *
  * Order: scale in `FromFrame`, then rotate `FromFrame -> ToFrame`, then translate
  * in `ToFrame`.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param translation Translation expressed in `toFrameTag`.
+ * @param rotation Rotation from `fromFrameTag` into `toFrameTag`.
+ * @param scale Non-uniform scale in `fromFrameTag`.
+ * @returns Affine TRS matrix.
+ * @throws {Error} When `rotation` is near zero length.
  */
 export const mat4FromTRS = <
   ToFrame extends string,
@@ -399,6 +513,11 @@ export const mat4FromTRS = <
  *
  * Returns a closure that reuses the previous matrix instance when all inputs are
  * numerically unchanged.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param translationUnitTag Translation unit token.
+ * @returns Memoized TRS builder.
  */
 export const createTrsMat4Cache = <
   ToFrame extends string,
@@ -504,6 +623,14 @@ export const createTrsMat4Cache = <
  * Builds a right-handed perspective projection matrix.
  *
  * Returns a matrix intended for `projectPoint3` (includes perspective divide).
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param fieldOfViewYRadians Vertical field of view in radians.
+ * @param aspect Width/height aspect ratio.
+ * @param near Near clipping plane distance.
+ * @param far Far clipping plane distance.
+ * @returns Projection matrix.
  */
 export const mat4PerspectiveUnsafe = <
   ToFrame extends string,
@@ -547,6 +674,15 @@ export const mat4PerspectiveUnsafe = <
  * Builds a right-handed perspective projection matrix.
  *
  * Returns a matrix intended for `projectPoint3` (includes perspective divide).
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param fieldOfViewYRadians Vertical field of view in radians.
+ * @param aspect Width/height aspect ratio.
+ * @param near Near clipping plane distance.
+ * @param far Far clipping plane distance.
+ * @returns Projection matrix.
+ * @throws {Error} When FOV/aspect/near/far inputs are invalid.
  */
 export const mat4Perspective = <
   ToFrame extends string,
@@ -588,6 +724,10 @@ export const mat4Perspective = <
  *
  * Unsafe variant: performs no `w === 0` guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
+ *
+ * @param point Input point in projection source frame.
+ * @param projection Projection matrix.
+ * @returns Point in normalized device coordinates.
  */
 export const projectPoint3Unsafe = <
   ToFrame extends string,
@@ -622,6 +762,11 @@ export const projectPoint3Unsafe = <
  * Projects a point with a perspective matrix and performs perspective divide.
  *
  * Throws when homogeneous `w` is zero.
+ *
+ * @param point Input point in projection source frame.
+ * @param projection Projection matrix.
+ * @returns Point in normalized device coordinates.
+ * @throws {Error} When homogeneous `w` equals zero.
  */
 export const projectPoint3 = <
   ToFrame extends string,
@@ -645,6 +790,13 @@ export const projectPoint3 = <
  * Builds a world-to-view pose matrix from eye, target, and up direction.
  *
  * Unsafe variant: performs no degeneracy checks on eye/target/up.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param point_eye_from Camera eye position.
+ * @param point_target_from Camera target position.
+ * @param dir_up_from Up direction.
+ * @returns View matrix.
  */
 export const mat4LookAtUnsafe = <
   ToFrame extends string,
@@ -723,6 +875,14 @@ export const mat4LookAtUnsafe = <
  * Builds a world-to-view pose matrix from eye, target, and up direction.
  *
  * `upDirection` must be dimensionless and non-zero.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param point_eye_from Camera eye position.
+ * @param point_target_from Camera target position.
+ * @param dir_up_from Up direction.
+ * @returns View matrix.
+ * @throws {Error} When eye/target/up vectors form a degenerate basis.
  */
 export const mat4LookAt = <
   ToFrame extends string,
@@ -775,7 +935,12 @@ export const mat4LookAt = <
   );
 };
 
-/** Transposes any matrix while swapping frame direction. */
+/**
+ * Transposes any matrix while swapping frame direction.
+ *
+ * @param value Input affine matrix.
+ * @returns Transposed matrix with swapped frame direction.
+ */
 export function transposeMat4<
   ToFrame extends string,
   FromFrame extends string,
@@ -784,7 +949,12 @@ export function transposeMat4<
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Mat4<FromFrame, ToFrame, TranslationUnit>;
 
-/** Transposes a linear matrix while keeping linear typing. */
+/**
+ * Transposes a linear matrix while keeping linear typing.
+ *
+ * @param value Input linear matrix.
+ * @returns Transposed linear matrix with swapped frame direction.
+ */
 export function transposeMat4<ToFrame extends string, FromFrame extends string>(
   value: LinearMat4<ToFrame, FromFrame>,
 ): LinearMat4<FromFrame, ToFrame>;
@@ -816,6 +986,13 @@ export function transposeMat4<
   ]);
 }
 
+/**
+ * Multiplies two raw 4x4 matrices in row-major order.
+ *
+ * @param left Left matrix values.
+ * @param right Right matrix values.
+ * @returns Product matrix values.
+ */
 const multiplyRaw = (
   left: readonly number[],
   right: readonly number[],
@@ -840,6 +1017,10 @@ const multiplyRaw = (
  *
  * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer transform.
+ * @param inner Inner transform.
+ * @returns Composed transform.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -855,6 +1036,10 @@ export function composeMat4<
  *
  * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer transform.
+ * @param inner Inner transform.
+ * @returns Composed transform.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -871,6 +1056,10 @@ export function composeMat4<
  *
  * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer transform.
+ * @param inner Inner transform.
+ * @returns Composed transform.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -887,6 +1076,10 @@ export function composeMat4<
  *
  * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer transform.
+ * @param inner Inner transform.
+ * @returns Composed transform.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -904,6 +1097,10 @@ export function composeMat4<
  * Result translation unit is widened to `UnitExpr`.
  * `composeMat4(outer, inner)` returns `outer * inner`, so `inner` is applied
  * first.
+ *
+ * @param outer Outer transform.
+ * @param inner Inner transform.
+ * @returns Composed transform with widened translation unit.
  */
 export function composeMat4<
   ToFrame extends string,
@@ -918,12 +1115,27 @@ export function composeMat4<
   return asMat4<ToFrame, FromFrame, UnitExpr>(multiplyRaw(outer, inner));
 }
 
+/**
+ * Checks whether two scalar values are within epsilon tolerance.
+ *
+ * @param actual Computed value.
+ * @param expected Reference value.
+ * @param epsilon Absolute tolerance.
+ * @returns `true` when values are close enough.
+ */
 const isApproximately = (
   actual: number,
   expected: number,
   epsilon: number,
 ): boolean => Math.abs(actual - expected) <= epsilon;
 
+/**
+ * Validates that a matrix represents a rigid transform.
+ *
+ * @param value Raw matrix values.
+ * @param epsilon Absolute tolerance for orthonormal checks.
+ * @throws {Error} When the matrix is not rigid.
+ */
 const assertRigidTransform = (
   value: readonly number[],
   epsilon: number,
@@ -964,7 +1176,12 @@ const assertRigidTransform = (
   }
 };
 
-/** Inverts a linear matrix while preserving linear typing. */
+/**
+ * Inverts a linear rigid matrix while preserving linear typing.
+ *
+ * @param value Input linear matrix.
+ * @returns Inverse matrix with swapped frame direction.
+ */
 export function invertRigidMat4Unsafe<
   ToFrame extends string,
   FromFrame extends string,
@@ -974,6 +1191,9 @@ export function invertRigidMat4Unsafe<
 
 /**
  * Inverts a rigid affine matrix without validation.
+ *
+ * @param value Input affine matrix.
+ * @returns Inverse matrix with swapped frame direction.
  */
 export function invertRigidMat4Unsafe<
   ToFrame extends string,
@@ -1028,7 +1248,12 @@ export function invertRigidMat4Unsafe<
   ]);
 }
 
-/** Inverts a linear matrix while preserving linear typing. */
+/**
+ * Inverts a linear rigid matrix while preserving linear typing.
+ *
+ * @param value Input linear matrix.
+ * @returns Inverse matrix with swapped frame direction.
+ */
 export function invertRigidMat4<
   ToFrame extends string,
   FromFrame extends string,
@@ -1040,6 +1265,10 @@ export function invertRigidMat4<
  * Inverts a rigid affine matrix.
  *
  * Throws when matrix fails rigid transform validation.
+ *
+ * @param value Input affine matrix.
+ * @returns Inverse matrix with swapped frame direction.
+ * @throws {Error} When `value` is not a rigid transform.
  */
 export function invertRigidMat4<
   ToFrame extends string,
@@ -1065,6 +1294,9 @@ export function invertRigidMat4<
  *
  * Unsafe variant: performs no singularity guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
+ *
+ * @param value Input affine transform.
+ * @returns Normal matrix as a linear transform.
  */
 export const normalMatrixFromMat4Unsafe = <
   ToFrame extends string,
@@ -1121,6 +1353,10 @@ export const normalMatrixFromMat4Unsafe = <
  * Builds a normal matrix (inverse-transpose of upper-left 3x3 linear part).
  *
  * Throws when the linear part is singular.
+ *
+ * @param value Input affine transform.
+ * @returns Normal matrix as a linear transform.
+ * @throws {Error} When the upper-left 3x3 block is singular.
  */
 export const normalMatrixFromMat4 = <
   ToFrame extends string,
@@ -1155,6 +1391,10 @@ export const normalMatrixFromMat4 = <
  * Transforms a point with affine matrix and matching translation unit.
  *
  * Includes translation.
+ *
+ * @param point Input point.
+ * @param matrix Affine transform.
+ * @returns Transformed point.
  */
 export function transformPoint3<
   TranslationUnit extends UnitExpr,
@@ -1169,6 +1409,10 @@ export function transformPoint3<
  * Transforms a point with linear matrix.
  *
  * Unit can be any expression because translation is absent.
+ *
+ * @param point Input point.
+ * @param matrix Linear transform.
+ * @returns Transformed point.
  */
 export function transformPoint3<
   Unit extends UnitExpr,
@@ -1205,6 +1449,10 @@ export function transformPoint3<
  * Transforms a direction vector using only matrix linear part.
  *
  * Ignores translation component.
+ *
+ * @param direction Input displacement direction.
+ * @param matrix Transform matrix.
+ * @returns Transformed displacement direction.
  */
 export function transformDirection3<
   Unit extends UnitExpr,
@@ -1216,7 +1464,13 @@ export function transformDirection3<
   matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
 ): Delta3<Unit, ToFrame>;
 
-/** Transforms a unitless direction while preserving direction typing. */
+/**
+ * Transforms a unitless direction while preserving direction typing.
+ *
+ * @param direction Input unitless direction.
+ * @param matrix Transform matrix.
+ * @returns Transformed unitless direction.
+ */
 export function transformDirection3<
   MatrixTranslationUnit extends UnitExpr,
   ToFrame extends string,

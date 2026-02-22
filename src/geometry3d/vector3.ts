@@ -9,28 +9,66 @@ import {
 } from '../units.ts';
 import type { Delta3, Dir3, FrameTag, Point3 } from './types.ts';
 
+/**
+ * Casts a raw number into a branded quantity.
+ *
+ * @param value Raw numeric scalar.
+ * @returns Branded quantity.
+ */
 const asQuantity = <Unit extends UnitExpr>(value: number): Quantity<Unit> =>
   value as Quantity<Unit>;
 
+/**
+ * Casts xyz components to a branded displacement tuple.
+ *
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Branded displacement.
+ */
 const asDelta3 = <Unit extends UnitExpr, Frame extends string>(
   x: Quantity<Unit>,
   y: Quantity<Unit>,
   z: Quantity<Unit>,
 ): Delta3<Unit, Frame> => [x, y, z] as unknown as Delta3<Unit, Frame>;
 
+/**
+ * Casts xyz components to a branded point tuple.
+ *
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Branded point.
+ */
 const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
   x: Quantity<Unit>,
   y: Quantity<Unit>,
   z: Quantity<Unit>,
 ): Point3<Unit, Frame> => [x, y, z] as unknown as Point3<Unit, Frame>;
 
+/**
+ * Casts xyz components to a branded direction tuple.
+ *
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Branded direction.
+ */
 const asDir3 = <Frame extends string>(
   x: Quantity<Dimensionless>,
   y: Quantity<Dimensionless>,
   z: Quantity<Dimensionless>,
 ): Dir3<Frame> => [x, y, z] as unknown as Dir3<Frame>;
 
-/** Constructs a frame-aware displacement vector. */
+/**
+ * Constructs a frame-aware displacement vector.
+ *
+ * @param frameTag Frame token for the resulting displacement.
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Displacement in `frameTag`.
+ */
 export const delta3 = <Unit extends UnitExpr, Frame extends string>(
   frameTag: FrameTag<Frame>,
   x: Quantity<Unit>,
@@ -41,7 +79,15 @@ export const delta3 = <Unit extends UnitExpr, Frame extends string>(
   return asDelta3<Unit, Frame>(x, y, z);
 };
 
-/** Constructs a frame-aware point. */
+/**
+ * Constructs a frame-aware point.
+ *
+ * @param frameTag Frame token for the resulting point.
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Point in `frameTag`.
+ */
 export const point3 = <Unit extends UnitExpr, Frame extends string>(
   frameTag: FrameTag<Frame>,
   x: Quantity<Unit>,
@@ -52,7 +98,15 @@ export const point3 = <Unit extends UnitExpr, Frame extends string>(
   return asPoint3<Unit, Frame>(x, y, z);
 };
 
-/** Constructs a frame-aware direction (dimensionless). */
+/**
+ * Constructs a frame-aware direction (dimensionless).
+ *
+ * @param frameTag Frame token for the resulting direction.
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ * @returns Direction in `frameTag`.
+ */
 export const dir3 = <Frame extends string>(
   frameTag: FrameTag<Frame>,
   x: Quantity<Dimensionless>,
@@ -63,7 +117,13 @@ export const dir3 = <Frame extends string>(
   return asDir3<Frame>(x, y, z);
 };
 
-/** Constructs a zero displacement for an explicit unit and frame. */
+/**
+ * Constructs a zero displacement for an explicit unit and frame.
+ *
+ * @param unitTag Unit token for the displacement components.
+ * @param frameTag Frame token for the displacement.
+ * @returns Zero displacement in the provided unit and frame.
+ */
 export const zeroVec3 = <Unit extends UnitExpr, Frame extends string>(
   unitTag: UnitTag<Unit>,
   frameTag: FrameTag<Frame>,
@@ -75,7 +135,13 @@ export const zeroVec3 = <Unit extends UnitExpr, Frame extends string>(
     quantity(unitTag, 0),
   );
 
-/** Adds two displacements with matching unit and frame. */
+/**
+ * Adds two displacements with matching unit and frame.
+ *
+ * @param left Left displacement.
+ * @param right Right displacement in the same unit/frame.
+ * @returns Component-wise sum.
+ */
 export const addVec3 = <Unit extends UnitExpr, Frame extends string>(
   left: Delta3<Unit, Frame>,
   right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -86,7 +152,13 @@ export const addVec3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(left[2] + right[2]),
   );
 
-/** Subtracts two displacements with matching unit and frame. */
+/**
+ * Subtracts two displacements with matching unit and frame.
+ *
+ * @param left Left displacement.
+ * @param right Right displacement in the same unit/frame.
+ * @returns Component-wise difference.
+ */
 export const subVec3 = <Unit extends UnitExpr, Frame extends string>(
   left: Delta3<Unit, Frame>,
   right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -97,7 +169,12 @@ export const subVec3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(left[2] - right[2]),
   );
 
-/** Negates each displacement component. */
+/**
+ * Negates each displacement component.
+ *
+ * @param value Displacement to negate.
+ * @returns Negated displacement.
+ */
 export const negVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
 ): Delta3<Unit, Frame> =>
@@ -107,7 +184,13 @@ export const negVec3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(-value[2]),
   );
 
-/** Multiplies each displacement component by a unitless scalar. */
+/**
+ * Multiplies each displacement component by a unitless scalar.
+ *
+ * @param value Displacement to scale.
+ * @param scalar Unitless multiplier.
+ * @returns Scaled displacement.
+ */
 export const scaleVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
   scalar: number,
@@ -118,7 +201,13 @@ export const scaleVec3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(value[2] * scalar),
   );
 
-/** Scales a unitless direction by a unitful magnitude. */
+/**
+ * Scales a unitless direction by a unitful magnitude.
+ *
+ * @param value Direction vector.
+ * @param magnitude Unitful scalar magnitude.
+ * @returns Displacement with unit derived from `magnitude`.
+ */
 export const scaleDir3 = <Unit extends UnitExpr, Frame extends string>(
   value: Dir3<Frame>,
   magnitude: Quantity<Unit>,
@@ -129,7 +218,13 @@ export const scaleDir3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(value[2] * magnitude),
   );
 
-/** Translates a point by a displacement. */
+/**
+ * Translates a point by a displacement.
+ *
+ * @param point Input point.
+ * @param delta Translation displacement in the same frame/unit.
+ * @returns Translated point.
+ */
 export const addPoint3 = <Unit extends UnitExpr, Frame extends string>(
   point: Point3<Unit, Frame>,
   delta: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -140,7 +235,13 @@ export const addPoint3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(point[2] + delta[2]),
   );
 
-/** Offsets a point by subtracting a displacement. */
+/**
+ * Offsets a point by subtracting a displacement.
+ *
+ * @param point Input point.
+ * @param delta Displacement to subtract.
+ * @returns Offset point.
+ */
 export const subPoint3Delta3 = <Unit extends UnitExpr, Frame extends string>(
   point: Point3<Unit, Frame>,
   delta: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -151,7 +252,13 @@ export const subPoint3Delta3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(point[2] - delta[2]),
   );
 
-/** Computes the displacement from `right` point to `left` point. */
+/**
+ * Computes the displacement from `right` point to `left` point.
+ *
+ * @param left Destination point.
+ * @param right Source point.
+ * @returns Displacement that moves `right` to `left`.
+ */
 export const subPoint3 = <Unit extends UnitExpr, Frame extends string>(
   left: Point3<Unit, Frame>,
   right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -162,7 +269,13 @@ export const subPoint3 = <Unit extends UnitExpr, Frame extends string>(
     asQuantity<Unit>(left[2] - right[2]),
   );
 
-/** Computes dot product for two displacements/directions in the same frame. */
+/**
+ * Computes dot product for two displacements/directions in the same frame.
+ *
+ * @param left Left vector.
+ * @param right Right vector in the same frame.
+ * @returns Scalar product with multiplied unit.
+ */
 export const dotVec3 = <
   LeftUnit extends UnitExpr,
   RightUnit extends UnitExpr,
@@ -175,7 +288,13 @@ export const dotVec3 = <
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2],
   );
 
-/** Computes cross product for two displacements/directions in the same frame. */
+/**
+ * Computes cross product for two displacements/directions in the same frame.
+ *
+ * @param left Left vector.
+ * @param right Right vector in the same frame.
+ * @returns Cross-product vector with multiplied unit.
+ */
 export const crossVec3 = <
   LeftUnit extends UnitExpr,
   RightUnit extends UnitExpr,
@@ -196,23 +315,45 @@ export const crossVec3 = <
     ),
   );
 
-/** Computes squared Euclidean length of a displacement/direction. */
+/**
+ * Computes squared Euclidean length of a displacement/direction.
+ *
+ * @param value Input vector.
+ * @returns Squared length.
+ */
 export const lengthSquaredVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
 ): Quantity<MulUnit<Unit, Unit>> => dotVec3(value, value);
 
-/** Computes Euclidean length of a displacement/direction. */
+/**
+ * Computes Euclidean length of a displacement/direction.
+ *
+ * @param value Input vector.
+ * @returns Vector length.
+ */
 export const lengthVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
 ): Quantity<Unit> => asQuantity<Unit>(Math.hypot(value[0], value[1], value[2]));
 
-/** Computes Euclidean distance between two displacements. */
+/**
+ * Computes Euclidean distance between two displacements.
+ *
+ * @param left Left displacement.
+ * @param right Right displacement in the same unit/frame.
+ * @returns Distance magnitude.
+ */
 export function distanceVec3<Unit extends UnitExpr, Frame extends string>(
   left: Delta3<Unit, Frame>,
   right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
 ): Quantity<Unit>;
 
-/** Computes Euclidean distance between two points. */
+/**
+ * Computes Euclidean distance between two points.
+ *
+ * @param left Left point.
+ * @param right Right point in the same unit/frame.
+ * @returns Distance magnitude.
+ */
 export function distanceVec3<Unit extends UnitExpr, Frame extends string>(
   left: Point3<Unit, Frame>,
   right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -233,7 +374,13 @@ export function distanceVec3<Unit extends UnitExpr, Frame extends string>(
   );
 }
 
-/** Computes Euclidean distance between two points. */
+/**
+ * Computes Euclidean distance between two points.
+ *
+ * @param left Left point.
+ * @param right Right point in the same unit/frame.
+ * @returns Distance magnitude.
+ */
 export const distancePoint3 = <Unit extends UnitExpr, Frame extends string>(
   left: Point3<Unit, Frame>,
   right: Point3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -246,6 +393,9 @@ const NEAR_ZERO = 1e-14;
  *
  * Unsafe variant: performs no zero-length guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
+ *
+ * @param value Vector to normalize.
+ * @returns Unit-length direction in the same frame.
  */
 export const normalizeVec3Unsafe = <
   Unit extends UnitExpr,
@@ -265,6 +415,10 @@ export const normalizeVec3Unsafe = <
  * Normalizes displacement length to 1.
  *
  * Throws when vector length is at or below `1e-14`.
+ *
+ * @param value Vector to normalize.
+ * @returns Unit-length direction in the same frame.
+ * @throws {Error} When the vector is near zero length.
  */
 export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
@@ -277,14 +431,28 @@ export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
   return normalizeVec3Unsafe(value);
 };
 
-/** Linearly interpolates between two displacements. */
+/**
+ * Linearly interpolates between two displacements.
+ *
+ * @param start Start displacement.
+ * @param end End displacement in the same unit/frame.
+ * @param t Interpolation parameter.
+ * @returns Interpolated displacement.
+ */
 export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
   start: Delta3<Unit, Frame>,
   end: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
   t: number,
 ): Delta3<Unit, Frame>;
 
-/** Linearly interpolates between two points. */
+/**
+ * Linearly interpolates between two points.
+ *
+ * @param start Start point.
+ * @param end End point in the same unit/frame.
+ * @param t Interpolation parameter.
+ * @returns Interpolated point.
+ */
 export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
   start: Point3<Unit, Frame>,
   end: Point3<NoInfer<Unit>, NoInfer<Frame>>,
@@ -310,6 +478,10 @@ export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
  * Projects a displacement onto another displacement in the same frame.
  *
  * Unsafe variant: performs no zero-length guard for `onto`.
+ *
+ * @param value Vector being projected.
+ * @param onto Target direction for projection.
+ * @returns Projection of `value` onto `onto`.
  */
 export const projectVec3Unsafe = <
   ValueUnit extends UnitExpr,
@@ -332,7 +504,14 @@ export const projectVec3Unsafe = <
   );
 };
 
-/** Projects a displacement onto another displacement in the same frame. */
+/**
+ * Projects a displacement onto another displacement in the same frame.
+ *
+ * @param value Vector being projected.
+ * @param onto Target direction for projection.
+ * @returns Projection of `value` onto `onto`.
+ * @throws {Error} When `onto` is near zero length.
+ */
 export const projectVec3 = <
   ValueUnit extends UnitExpr,
   OntoUnit extends UnitExpr,
@@ -354,6 +533,10 @@ export const projectVec3 = <
  * Reflects a displacement around a normal direction.
  *
  * Unsafe variant: performs no zero-length guard for `normal`.
+ *
+ * @param incident Incident displacement.
+ * @param normal Reflection normal direction.
+ * @returns Reflected displacement.
  */
 export const reflectVec3Unsafe = <Unit extends UnitExpr, Frame extends string>(
   incident: Delta3<Unit, Frame>,
@@ -371,7 +554,14 @@ export const reflectVec3Unsafe = <Unit extends UnitExpr, Frame extends string>(
   );
 };
 
-/** Reflects a displacement around a normal direction. */
+/**
+ * Reflects a displacement around a normal direction.
+ *
+ * @param incident Incident displacement.
+ * @param normal Reflection normal direction.
+ * @returns Reflected displacement.
+ * @throws {Error} When `normal` is near zero length.
+ */
 export const reflectVec3 = <Unit extends UnitExpr, Frame extends string>(
   incident: Delta3<Unit, Frame>,
   normal: Dir3<NoInfer<Frame>>,
@@ -384,6 +574,10 @@ export const reflectVec3 = <Unit extends UnitExpr, Frame extends string>(
  * Computes the angle in radians between two displacements.
  *
  * Unsafe variant: performs no zero-length guards.
+ *
+ * @param left Left vector.
+ * @param right Right vector.
+ * @returns Angle in radians.
  */
 export const angleBetweenVec3Unsafe = <
   LeftUnit extends UnitExpr,
@@ -403,7 +597,14 @@ export const angleBetweenVec3Unsafe = <
   return Math.acos(clamped);
 };
 
-/** Computes the angle in radians between two non-zero displacements. */
+/**
+ * Computes the angle in radians between two non-zero displacements.
+ *
+ * @param left Left vector.
+ * @param right Right vector.
+ * @returns Angle in radians.
+ * @throws {Error} When either vector is near zero length.
+ */
 export const angleBetweenVec3 = <
   LeftUnit extends UnitExpr,
   RightUnit extends UnitExpr,

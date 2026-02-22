@@ -26,8 +26,8 @@ Deno.test('example: unit-safe constant-acceleration kinematics', () => {
   const time_step = quantity(second, 2);
 
   /** Kinematic velocity update: `v1 = v0 + a * t`. */
-  const delta_speed = mul(accel_braking, time_step);
-  const speed_next = add(speed_initial, delta_speed);
+  const speed_change = mul(accel_braking, time_step);
+  const speed_next = add(speed_initial, speed_change);
   assertAlmostEquals(speed_next, 10, 1e-12);
 
   /** Kinematic displacement update: `x = v0 * t + 0.5 * a * t^2`. */

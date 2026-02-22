@@ -15,7 +15,12 @@ export type FrameTag<Frame extends string> = string & {
   readonly [frameTagBrand]: Frame;
 };
 
-/** Creates a compile-time frame token. */
+/**
+ * Creates a compile-time frame token.
+ *
+ * @param name Frame identifier text.
+ * @returns Branded frame token used by frame-aware APIs.
+ */
 export const frame = <Frame extends string>(name: Frame): FrameTag<Frame> =>
   name as unknown as FrameTag<Frame>;
 

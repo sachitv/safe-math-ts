@@ -54,7 +54,6 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
     quat_tilt_world_object,
     dir_scale_object,
   );
-  const pose_normal_world_object = normalMatrixFromMat4(pose_world_object);
 
   const dir_normal_object = dir3(
     frame_object,
@@ -64,7 +63,7 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
   );
   const delta_normal_world = transformDirection3(
     dir_normal_object,
-    pose_normal_world_object,
+    normalMatrixFromMat4(pose_world_object),
   );
   const dir_normal_world = normalizeVec3(delta_normal_world);
 
@@ -79,23 +78,23 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
     dir_normal_world,
   );
 
-  const delta_normal_world_ref = scaleDir3(
+  const delta_reference_world = scaleDir3(
     dir_normal_world,
     quantity(meter, 1),
   );
   const angle_incidence = angleBetweenVec3(
     negVec3(delta_incoming_world),
-    delta_normal_world_ref,
+    delta_reference_world,
   );
   const angle_reflection = angleBetweenVec3(
     delta_reflected_world,
-    delta_normal_world_ref,
+    delta_reference_world,
   );
   assertAlmostEquals(angle_incidence, angle_reflection, 1e-10);
 
   const normal_component = dotVec3(
     delta_reflected_world,
-    delta_normal_world_ref,
+    delta_reference_world,
   );
   assert(normal_component > 0);
 });
