@@ -95,8 +95,10 @@ export const quatNormSquared = <
 >(
   value: Quaternion<ToFrame, FromFrame>,
 ): number =>
-  value[0] * value[0] + value[1] * value[1] + value[2] * value[2] +
-  value[3] * value[3];
+  value[0] * value[0]
+  + value[1] * value[1]
+  + value[2] * value[2]
+  + value[3] * value[3];
 
 /**
  * Computes quaternion norm.
@@ -218,12 +220,28 @@ export const composeQuats = <
   const [x1, y1, z1, w1] = inner;
   const [x2, y2, z2, w2] = outer;
 
-  return asQuaternion<ToFrame, FromFrame>(
-    w2 * x1 + x2 * w1 + y2 * z1 - z2 * y1,
-    w2 * y1 - x2 * z1 + y2 * w1 + z2 * x1,
-    w2 * z1 + x2 * y1 - y2 * x1 + z2 * w1,
-    w2 * w1 - x2 * x1 - y2 * y1 - z2 * z1,
-  );
+  const x =
+    w2 * x1
+    + x2 * w1
+    + y2 * z1
+    - z2 * y1;
+  const y =
+    w2 * y1
+    - x2 * z1
+    + y2 * w1
+    + z2 * x1;
+  const z =
+    w2 * z1
+    + x2 * y1
+    - y2 * x1
+    + z2 * w1;
+  const w =
+    w2 * w1
+    - x2 * x1
+    - y2 * y1
+    - z2 * z1;
+
+  return asQuaternion<ToFrame, FromFrame>(x, y, z, w);
 };
 
 /**
@@ -268,14 +286,38 @@ export function rotateVec3ByQuatUnsafe<
   const [qx, qy, qz, qw] = quatNormalizeUnsafe(rotation);
   const [vx, vy, vz] = value;
 
-  const tx = 2 * (qy * vz - qz * vy);
-  const ty = 2 * (qz * vx - qx * vz);
-  const tz = 2 * (qx * vy - qy * vx);
+  // Quaternion-vector rotation via optimized form:
+  // t = 2 * cross(q.xyz, v), v' = v + qw * t + cross(q.xyz, t)
+  const tx = 2 * (
+    qy * vz
+    - qz * vy
+  );
+  const ty = 2 * (
+    qz * vx
+    - qx * vz
+  );
+  const tz = 2 * (
+    qx * vy
+    - qy * vx
+  );
+
+  const rotatedX =
+    vx
+    + qw * tx
+    + (qy * tz - qz * ty);
+  const rotatedY =
+    vy
+    + qw * ty
+    + (qz * tx - qx * tz);
+  const rotatedZ =
+    vz
+    + qw * tz
+    + (qx * ty - qy * tx);
 
   return [
-    asQuantity<Unit>(vx + qw * tx + (qy * tz - qz * ty)),
-    asQuantity<Unit>(vy + qw * ty + (qz * tx - qx * tz)),
-    asQuantity<Unit>(vz + qw * tz + (qx * ty - qy * tx)),
+    asQuantity<Unit>(rotatedX),
+    asQuantity<Unit>(rotatedY),
+    asQuantity<Unit>(rotatedZ),
   ] as unknown as Delta3<Unit, ToFrame> | Dir3<ToFrame>;
 }
 
@@ -467,8 +509,11 @@ export const quatNlerpUnsafe = <
   let endZ = end[2];
   let endW = end[3];
 
-  const dot = start[0] * endX + start[1] * endY + start[2] * endZ +
-    start[3] * endW;
+  const dot =
+    start[0] * endX
+    + start[1] * endY
+    + start[2] * endZ
+    + start[3] * endW;
   if (dot < 0) {
     endX = -endX;
     endY = -endY;
@@ -479,10 +524,14 @@ export const quatNlerpUnsafe = <
   const inverseT = 1 - t;
   return quatNormalizeUnsafe(
     asQuaternion<ToFrame, FromFrame>(
-      start[0] * inverseT + endX * t,
-      start[1] * inverseT + endY * t,
-      start[2] * inverseT + endZ * t,
-      start[3] * inverseT + endW * t,
+      start[0] * inverseT
+        + endX * t,
+      start[1] * inverseT
+        + endY * t,
+      start[2] * inverseT
+        + endZ * t,
+      start[3] * inverseT
+        + endW * t,
     ),
   );
 };
@@ -505,8 +554,11 @@ export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
   let endZ = end[2];
   let endW = end[3];
 
-  const dot = start[0] * endX + start[1] * endY + start[2] * endZ +
-    start[3] * endW;
+  const dot =
+    start[0] * endX
+    + start[1] * endY
+    + start[2] * endZ
+    + start[3] * endW;
   if (dot < 0) {
     endX = -endX;
     endY = -endY;
@@ -516,10 +568,14 @@ export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
 
   const inverseT = 1 - t;
   const quat_blend = asQuaternion<ToFrame, FromFrame>(
-    start[0] * inverseT + endX * t,
-    start[1] * inverseT + endY * t,
-    start[2] * inverseT + endZ * t,
-    start[3] * inverseT + endW * t,
+    start[0] * inverseT
+      + endX * t,
+    start[1] * inverseT
+      + endY * t,
+    start[2] * inverseT
+      + endZ * t,
+    start[3] * inverseT
+      + endW * t,
   );
   quatNormalize(quat_blend);
   return quatNlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
@@ -546,8 +602,11 @@ export const quatSlerpUnsafe = <
   let endZ = end[2];
   let endW = end[3];
 
-  let cosine = start[0] * endX + start[1] * endY + start[2] * endZ +
-    start[3] * endW;
+  let cosine =
+    start[0] * endX
+    + start[1] * endY
+    + start[2] * endZ
+    + start[3] * endW;
   if (cosine < 0) {
     cosine = -cosine;
     endX = -endX;
@@ -569,10 +628,14 @@ export const quatSlerpUnsafe = <
 
   return quatNormalizeUnsafe(
     asQuaternion<ToFrame, FromFrame>(
-      s0 * start[0] + s1 * endX,
-      s0 * start[1] + s1 * endY,
-      s0 * start[2] + s1 * endZ,
-      s0 * start[3] + s1 * endW,
+      s0 * start[0]
+        + s1 * endX,
+      s0 * start[1]
+        + s1 * endY,
+      s0 * start[2]
+        + s1 * endZ,
+      s0 * start[3]
+        + s1 * endW,
     ),
   );
 };
@@ -595,8 +658,11 @@ export const quatSlerp = <ToFrame extends string, FromFrame extends string>(
   let endZ = end[2];
   let endW = end[3];
 
-  let cosine = start[0] * endX + start[1] * endY + start[2] * endZ +
-    start[3] * endW;
+  let cosine =
+    start[0] * endX
+    + start[1] * endY
+    + start[2] * endZ
+    + start[3] * endW;
   if (cosine < 0) {
     cosine = -cosine;
     endX = -endX;
@@ -616,10 +682,14 @@ export const quatSlerp = <ToFrame extends string, FromFrame extends string>(
   const s0 = Math.sin(theta0 - theta) / sinTheta0;
   const s1 = sinTheta / sinTheta0;
   const quat_blend = asQuaternion<ToFrame, FromFrame>(
-    s0 * start[0] + s1 * endX,
-    s0 * start[1] + s1 * endY,
-    s0 * start[2] + s1 * endZ,
-    s0 * start[3] + s1 * endW,
+    s0 * start[0]
+      + s1 * endX,
+    s0 * start[1]
+      + s1 * endY,
+    s0 * start[2]
+      + s1 * endZ,
+    s0 * start[3]
+      + s1 * endW,
   );
   quatNormalize(quat_blend);
   return quatSlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);

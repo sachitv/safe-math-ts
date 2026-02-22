@@ -741,14 +741,26 @@ export const projectPoint3Unsafe = <
   const y = point[1];
   const z = point[2];
 
-  const clipX = projection[0] * x + projection[1] * y + projection[2] * z +
-    projection[3];
-  const clipY = projection[4] * x + projection[5] * y + projection[6] * z +
-    projection[7];
-  const clipZ = projection[8] * x + projection[9] * y + projection[10] * z +
-    projection[11];
-  const clipW = projection[12] * x + projection[13] * y + projection[14] * z +
-    projection[15];
+  const clipX =
+    projection[0] * x
+    + projection[1] * y
+    + projection[2] * z
+    + projection[3];
+  const clipY =
+    projection[4] * x
+    + projection[5] * y
+    + projection[6] * z
+    + projection[7];
+  const clipZ =
+    projection[8] * x
+    + projection[9] * y
+    + projection[10] * z
+    + projection[11];
+  const clipW =
+    projection[12] * x
+    + projection[13] * y
+    + projection[14] * z
+    + projection[15];
 
   const invW = 1 / clipW;
   return asPoint3<Dimensionless, ToFrame>(
@@ -776,8 +788,11 @@ export const projectPoint3 = <
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
   projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
 ): Point3<Dimensionless, ToFrame> => {
-  const clipW = projection[12] * point[0] + projection[13] * point[1] +
-    projection[14] * point[2] + projection[15];
+  const clipW =
+    projection[12] * point[0]
+    + projection[13] * point[1]
+    + projection[14] * point[2]
+    + projection[15];
 
   if (clipW === 0) {
     throw new Error('Perspective divide is undefined for w = 0');
@@ -1157,19 +1172,28 @@ const assertRigidTransform = (
   const dot01 = row0x * row1x + row0y * row1y + row0z * row1z;
   const dot02 = row0x * row2x + row0y * row2y + row0z * row2z;
   const dot12 = row1x * row2x + row1y * row2y + row1z * row2z;
-
-  const isRigid = Number.isFinite(norm0) && Number.isFinite(norm1) &&
-    Number.isFinite(norm2) &&
-    isApproximately(norm0, 1, epsilon) &&
-    isApproximately(norm1, 1, epsilon) &&
-    isApproximately(norm2, 1, epsilon) &&
-    isApproximately(dot01, 0, epsilon) &&
-    isApproximately(dot02, 0, epsilon) &&
-    isApproximately(dot12, 0, epsilon) &&
-    isApproximately(value[12]!, 0, epsilon) &&
-    isApproximately(value[13]!, 0, epsilon) &&
-    isApproximately(value[14]!, 0, epsilon) &&
-    isApproximately(value[15]!, 1, epsilon);
+  const hasFiniteNorms =
+    Number.isFinite(norm0)
+    && Number.isFinite(norm1)
+    && Number.isFinite(norm2);
+  const hasUnitLengthRows =
+    isApproximately(norm0, 1, epsilon)
+    && isApproximately(norm1, 1, epsilon)
+    && isApproximately(norm2, 1, epsilon);
+  const hasOrthogonalRows =
+    isApproximately(dot01, 0, epsilon)
+    && isApproximately(dot02, 0, epsilon)
+    && isApproximately(dot12, 0, epsilon);
+  const hasAffineBottomRow =
+    isApproximately(value[12]!, 0, epsilon)
+    && isApproximately(value[13]!, 0, epsilon)
+    && isApproximately(value[14]!, 0, epsilon)
+    && isApproximately(value[15]!, 1, epsilon);
+  const isRigid =
+    hasFiniteNorms
+    && hasUnitLengthRows
+    && hasOrthogonalRows
+    && hasAffineBottomRow;
 
   if (!isRigid) {
     throw new Error('Matrix is not a rigid transform');
@@ -1435,13 +1459,26 @@ export function transformPoint3<
   const x = point[0];
   const y = point[1];
   const z = point[2];
+  const transformedX =
+    matrix[0] * x
+    + matrix[1] * y
+    + matrix[2] * z
+    + matrix[3];
+  const transformedY =
+    matrix[4] * x
+    + matrix[5] * y
+    + matrix[6] * z
+    + matrix[7];
+  const transformedZ =
+    matrix[8] * x
+    + matrix[9] * y
+    + matrix[10] * z
+    + matrix[11];
 
   return asPoint3<Unit, ToFrame>(
-    asQuantity<Unit>(matrix[0] * x + matrix[1] * y + matrix[2] * z + matrix[3]),
-    asQuantity<Unit>(matrix[4] * x + matrix[5] * y + matrix[6] * z + matrix[7]),
-    asQuantity<Unit>(
-      matrix[8] * x + matrix[9] * y + matrix[10] * z + matrix[11],
-    ),
+    asQuantity<Unit>(transformedX),
+    asQuantity<Unit>(transformedY),
+    asQuantity<Unit>(transformedZ),
   );
 }
 
@@ -1492,10 +1529,22 @@ export function transformDirection3<
   const x = direction[0];
   const y = direction[1];
   const z = direction[2];
+  const transformedX =
+    matrix[0] * x
+    + matrix[1] * y
+    + matrix[2] * z;
+  const transformedY =
+    matrix[4] * x
+    + matrix[5] * y
+    + matrix[6] * z;
+  const transformedZ =
+    matrix[8] * x
+    + matrix[9] * y
+    + matrix[10] * z;
 
   return asDelta3<Unit, ToFrame>(
-    asQuantity<Unit>(matrix[0] * x + matrix[1] * y + matrix[2] * z),
-    asQuantity<Unit>(matrix[4] * x + matrix[5] * y + matrix[6] * z),
-    asQuantity<Unit>(matrix[8] * x + matrix[9] * y + matrix[10] * z),
+    asQuantity<Unit>(transformedX),
+    asQuantity<Unit>(transformedY),
+    asQuantity<Unit>(transformedZ),
   ) as Delta3<Unit, ToFrame> | Dir3<ToFrame>;
 }

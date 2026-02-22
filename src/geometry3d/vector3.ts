@@ -145,12 +145,12 @@ export const zeroVec3 = <Unit extends UnitExpr, Frame extends string>(
 export const addVec3 = <Unit extends UnitExpr, Frame extends string>(
   left: Delta3<Unit, Frame>,
   right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
-): Delta3<Unit, Frame> =>
-  asDelta3<Unit, Frame>(
-    asQuantity<Unit>(left[0] + right[0]),
-    asQuantity<Unit>(left[1] + right[1]),
-    asQuantity<Unit>(left[2] + right[2]),
-  );
+): Delta3<Unit, Frame> => {
+  const x = asQuantity<Unit>(left[0] + right[0]);
+  const y = asQuantity<Unit>(left[1] + right[1]);
+  const z = asQuantity<Unit>(left[2] + right[2]);
+  return asDelta3<Unit, Frame>(x, y, z);
+};
 
 /**
  * Subtracts two displacements with matching unit and frame.
@@ -162,12 +162,12 @@ export const addVec3 = <Unit extends UnitExpr, Frame extends string>(
 export const subVec3 = <Unit extends UnitExpr, Frame extends string>(
   left: Delta3<Unit, Frame>,
   right: Delta3<NoInfer<Unit>, NoInfer<Frame>>,
-): Delta3<Unit, Frame> =>
-  asDelta3<Unit, Frame>(
-    asQuantity<Unit>(left[0] - right[0]),
-    asQuantity<Unit>(left[1] - right[1]),
-    asQuantity<Unit>(left[2] - right[2]),
-  );
+): Delta3<Unit, Frame> => {
+  const x = asQuantity<Unit>(left[0] - right[0]);
+  const y = asQuantity<Unit>(left[1] - right[1]);
+  const z = asQuantity<Unit>(left[2] - right[2]);
+  return asDelta3<Unit, Frame>(x, y, z);
+};
 
 /**
  * Negates each displacement component.
@@ -194,12 +194,12 @@ export const negVec3 = <Unit extends UnitExpr, Frame extends string>(
 export const scaleVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
   scalar: number,
-): Delta3<Unit, Frame> =>
-  asDelta3<Unit, Frame>(
-    asQuantity<Unit>(value[0] * scalar),
-    asQuantity<Unit>(value[1] * scalar),
-    asQuantity<Unit>(value[2] * scalar),
-  );
+): Delta3<Unit, Frame> => {
+  const x = asQuantity<Unit>(value[0] * scalar);
+  const y = asQuantity<Unit>(value[1] * scalar);
+  const z = asQuantity<Unit>(value[2] * scalar);
+  return asDelta3<Unit, Frame>(x, y, z);
+};
 
 /**
  * Scales a unitless direction by a unitful magnitude.
@@ -283,10 +283,13 @@ export const dotVec3 = <
 >(
   left: Delta3<LeftUnit, Frame>,
   right: Delta3<RightUnit, NoInfer<Frame>>,
-): Quantity<MulUnit<LeftUnit, RightUnit>> =>
-  asQuantity<MulUnit<LeftUnit, RightUnit>>(
-    left[0] * right[0] + left[1] * right[1] + left[2] * right[2],
-  );
+): Quantity<MulUnit<LeftUnit, RightUnit>> => {
+  const xx = left[0] * right[0];
+  const yy = left[1] * right[1];
+  const zz = left[2] * right[2];
+  const dot = xx + yy + zz;
+  return asQuantity<MulUnit<LeftUnit, RightUnit>>(dot);
+};
 
 /**
  * Computes cross product for two displacements/directions in the same frame.
@@ -302,18 +305,18 @@ export const crossVec3 = <
 >(
   left: Delta3<LeftUnit, Frame>,
   right: Delta3<RightUnit, NoInfer<Frame>>,
-): Delta3<MulUnit<LeftUnit, RightUnit>, Frame> =>
-  asDelta3<MulUnit<LeftUnit, RightUnit>, Frame>(
-    asQuantity<MulUnit<LeftUnit, RightUnit>>(
-      left[1] * right[2] - left[2] * right[1],
-    ),
-    asQuantity<MulUnit<LeftUnit, RightUnit>>(
-      left[2] * right[0] - left[0] * right[2],
-    ),
-    asQuantity<MulUnit<LeftUnit, RightUnit>>(
-      left[0] * right[1] - left[1] * right[0],
-    ),
+): Delta3<MulUnit<LeftUnit, RightUnit>, Frame> => {
+  const x = asQuantity<MulUnit<LeftUnit, RightUnit>>(
+    left[1] * right[2] - left[2] * right[1],
   );
+  const y = asQuantity<MulUnit<LeftUnit, RightUnit>>(
+    left[2] * right[0] - left[0] * right[2],
+  );
+  const z = asQuantity<MulUnit<LeftUnit, RightUnit>>(
+    left[0] * right[1] - left[1] * right[0],
+  );
+  return asDelta3<MulUnit<LeftUnit, RightUnit>, Frame>(x, y, z);
+};
 
 /**
  * Computes squared Euclidean length of a displacement/direction.
@@ -365,13 +368,11 @@ export function distanceVec3<Unit extends UnitExpr, Frame extends string>(
     | Delta3<NoInfer<Unit>, NoInfer<Frame>>
     | Point3<NoInfer<Unit>, NoInfer<Frame>>,
 ): Quantity<Unit> {
-  return asQuantity<Unit>(
-    Math.hypot(
-      left[0] - right[0],
-      left[1] - right[1],
-      left[2] - right[2],
-    ),
-  );
+  const dx = left[0] - right[0];
+  const dy = left[1] - right[1];
+  const dz = left[2] - right[2];
+  const distance = Math.hypot(dx, dy, dz);
+  return asQuantity<Unit>(distance);
 }
 
 /**
@@ -467,10 +468,20 @@ export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
   t: number,
 ): Delta3<Unit, Frame> | Point3<Unit, Frame> {
   const inverseT = 1 - t;
+  const x =
+    start[0] * inverseT
+    + end[0] * t;
+  const y =
+    start[1] * inverseT
+    + end[1] * t;
+  const z =
+    start[2] * inverseT
+    + end[2] * t;
+
   return [
-    asQuantity<Unit>(start[0] * inverseT + end[0] * t),
-    asQuantity<Unit>(start[1] * inverseT + end[1] * t),
-    asQuantity<Unit>(start[2] * inverseT + end[2] * t),
+    asQuantity<Unit>(x),
+    asQuantity<Unit>(y),
+    asQuantity<Unit>(z),
   ] as unknown as Delta3<Unit, Frame> | Point3<Unit, Frame>;
 }
 
@@ -491,11 +502,15 @@ export const projectVec3Unsafe = <
   value: Delta3<ValueUnit, Frame>,
   onto: Delta3<OntoUnit, NoInfer<Frame>>,
 ): Delta3<ValueUnit, Frame> => {
-  const ontoLengthSquared = onto[0] * onto[0] + onto[1] * onto[1] +
-    onto[2] * onto[2];
-  const scalar = (value[0] * onto[0] + value[1] * onto[1] +
-    value[2] * onto[2]) /
-    ontoLengthSquared;
+  const ontoLengthSquared =
+    onto[0] * onto[0]
+    + onto[1] * onto[1]
+    + onto[2] * onto[2];
+  const dotValueOnto =
+    value[0] * onto[0]
+    + value[1] * onto[1]
+    + value[2] * onto[2];
+  const scalar = dotValueOnto / ontoLengthSquared;
 
   return asDelta3<ValueUnit, Frame>(
     asQuantity<ValueUnit>(onto[0] * scalar),
@@ -520,8 +535,10 @@ export const projectVec3 = <
   value: Delta3<ValueUnit, Frame>,
   onto: Delta3<OntoUnit, NoInfer<Frame>>,
 ): Delta3<ValueUnit, Frame> => {
-  const ontoLengthSquared = onto[0] * onto[0] + onto[1] * onto[1] +
-    onto[2] * onto[2];
+  const ontoLengthSquared =
+    onto[0] * onto[0]
+    + onto[1] * onto[1]
+    + onto[2] * onto[2];
   if (ontoLengthSquared <= NEAR_ZERO * NEAR_ZERO) {
     throw new Error('Cannot project onto a zero-length vector');
   }
@@ -543,9 +560,11 @@ export const reflectVec3Unsafe = <Unit extends UnitExpr, Frame extends string>(
   normal: Dir3<NoInfer<Frame>>,
 ): Delta3<Unit, Frame> => {
   const dir_normalized = normalizeVec3Unsafe(normal);
-  const scale = 2 *
-    (incident[0] * dir_normalized[0] + incident[1] * dir_normalized[1] +
-      incident[2] * dir_normalized[2]);
+  const dotIncidentNormal =
+    incident[0] * dir_normalized[0]
+    + incident[1] * dir_normalized[1]
+    + incident[2] * dir_normalized[2];
+  const scale = 2 * dotIncidentNormal;
 
   return asDelta3<Unit, Frame>(
     asQuantity<Unit>(incident[0] - dir_normalized[0] * scale),
@@ -589,9 +608,12 @@ export const angleBetweenVec3Unsafe = <
 ): number => {
   const leftLength = Math.hypot(left[0], left[1], left[2]);
   const rightLength = Math.hypot(right[0], right[1], right[2]);
-  const cosine = (left[0] * right[0] + left[1] * right[1] +
-    left[2] * right[2]) /
-    (leftLength * rightLength);
+  const dotLeftRight =
+    left[0] * right[0]
+    + left[1] * right[1]
+    + left[2] * right[2];
+  const lengthProduct = leftLength * rightLength;
+  const cosine = dotLeftRight / lengthProduct;
 
   const clamped = Math.max(-1, Math.min(1, cosine));
   return Math.acos(clamped);
