@@ -29,6 +29,27 @@ const frame_body = frame('body');
 const meter = unit('m');
 const second = unit('s');
 const secondSquared = unit('s^2');
+const dynamicUnitName: string = 'm';
+const literalUnitName = 'kg' as const;
+const dynamicFromFunction = (name: string): string => name;
+const widenedUnitName = dynamicFromFunction('s');
+
+// @ts-expect-error dynamic string input must not be accepted
+unit(dynamicUnitName);
+// @ts-expect-error function-returned string is widened and must be rejected
+unit(widenedUnitName);
+
+unit(literalUnitName);
+quantity(unit(literalUnitName), 1);
+
+// @ts-expect-error widened unit should be rejected before quantity construction
+quantity(unit(dynamicUnitName), 1);
+
+const makeQuantityFromDynamic = (name: string, value: number) => {
+  // @ts-expect-error helper wrappers must not permit widened unit strings
+  return quantity(unit(name), value);
+};
+void makeQuantityFromDynamic;
 
 type IsEqual<Left, Right> = (<Type>() => Type extends Left ? 1 : 2) extends
   (<Type>() => Type extends Right ? 1 : 2) ? true
@@ -56,6 +77,12 @@ type _assert_div_type_expansion = AssertTrue<
     DivUnit<UnitFromString<'m'>, UnitFromString<'s^2'>>,
     UnitFromString<'m/s^2'>
   >
+>;
+type _assert_mul_commutative_canonical = AssertTrue<
+  IsEqual<UnitFromString<'m*s'>, UnitFromString<'s*m'>>
+>;
+type _assert_div_commutative_denominator = AssertTrue<
+  IsEqual<UnitFromString<'kg*m/s^2'>, UnitFromString<'m*kg/s/s'>>
 >;
 
 const point_world = point3(
