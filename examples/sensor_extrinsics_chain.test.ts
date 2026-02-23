@@ -76,11 +76,11 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
     quantity(meter, 0.3),
   );
 
-  const point_hit_world_lidar = transformPoint3(
+  const point_hit_world = transformPoint3(
     pose_world_lidar,
     point_hit_lidar,
   );
-  const point_hit_world_camera = transformPoint3(
+  const point_hit_world_from_camera = transformPoint3(
     pose_world_camera,
     point_hit_camera,
   );
@@ -88,7 +88,7 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   const pose_lidar_world = invertRigidMat4(pose_world_lidar);
   const point_hit_lidar_roundtrip = transformPoint3(
     pose_lidar_world,
-    point_hit_world_lidar,
+    point_hit_world,
   );
 
   assertAlmostEquals(point_hit_lidar_roundtrip[0], point_hit_lidar[0], 1e-10);
@@ -96,10 +96,10 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   assertAlmostEquals(point_hit_lidar_roundtrip[2], point_hit_lidar[2], 1e-10);
 
   // Both chained transforms are valid and yield finite world points.
-  assert(Number.isFinite(point_hit_world_lidar[0]));
-  assert(Number.isFinite(point_hit_world_lidar[1]));
-  assert(Number.isFinite(point_hit_world_lidar[2]));
-  assert(Number.isFinite(point_hit_world_camera[0]));
-  assert(Number.isFinite(point_hit_world_camera[1]));
-  assert(Number.isFinite(point_hit_world_camera[2]));
+  assert(Number.isFinite(point_hit_world[0]));
+  assert(Number.isFinite(point_hit_world[1]));
+  assert(Number.isFinite(point_hit_world[2]));
+  assert(Number.isFinite(point_hit_world_from_camera[0]));
+  assert(Number.isFinite(point_hit_world_from_camera[1]));
+  assert(Number.isFinite(point_hit_world_from_camera[2]));
 });
