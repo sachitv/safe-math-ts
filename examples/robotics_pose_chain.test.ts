@@ -72,7 +72,7 @@ Deno.test('example: compose vehicle and sensor poses for robotics localization',
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const point_hit_world = transformPoint3(point_hit_lidar, pose_world_lidar);
+  const point_hit_world = transformPoint3(pose_world_lidar, point_hit_lidar);
 
   assertAlmostEquals(point_hit_world[0], 8, 1e-12);
   assertAlmostEquals(point_hit_world[1], 1, 1e-12);

@@ -247,8 +247,8 @@ export const composeQuats = <
 /**
  * Rotates a displacement vector from `FromFrame` into `ToFrame`.
  *
- * @param value Displacement to rotate.
  * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @param value Displacement to rotate.
  * @returns Rotated displacement in `ToFrame`.
  */
 export function rotateVec3ByQuatUnsafe<
@@ -256,23 +256,23 @@ export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Delta3<Unit, NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame>;
 
 /**
  * Rotates a direction vector from `FromFrame` into `ToFrame`.
  *
- * @param value Direction to rotate.
  * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @param value Direction to rotate.
  * @returns Rotated direction in `ToFrame`.
  */
 export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Dir3<NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Dir3<NoInfer<FromFrame>>,
 ): Dir3<ToFrame>;
 
 export function rotateVec3ByQuatUnsafe<
@@ -280,8 +280,8 @@ export function rotateVec3ByQuatUnsafe<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   const [qx, qy, qz, qw] = quatNormalizeUnsafe(rotation);
   const [vx, vy, vz] = value;
@@ -324,8 +324,8 @@ export function rotateVec3ByQuatUnsafe<
 /**
  * Rotates a displacement vector from `FromFrame` into `ToFrame`.
  *
- * @param value Displacement to rotate.
  * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @param value Displacement to rotate.
  * @returns Rotated displacement in `ToFrame`.
  */
 export function rotateVec3ByQuat<
@@ -333,23 +333,23 @@ export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Delta3<Unit, NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame>;
 
 /**
  * Rotates a direction vector from `FromFrame` into `ToFrame`.
  *
- * @param value Direction to rotate.
  * @param rotation Quaternion mapping `FromFrame -> ToFrame`.
+ * @param value Direction to rotate.
  * @returns Rotated direction in `ToFrame`.
  */
 export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Dir3<NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Dir3<NoInfer<FromFrame>>,
 ): Dir3<ToFrame>;
 
 export function rotateVec3ByQuat<
@@ -357,14 +357,11 @@ export function rotateVec3ByQuat<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
   rotation: Quaternion<ToFrame, FromFrame>,
+  value: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   quatNormalize(rotation);
-  return rotateVec3ByQuatUnsafe(
-    value as Delta3<Unit, NoInfer<FromFrame>>,
-    rotation,
-  );
+  return rotateVec3ByQuatUnsafe(rotation, value as Delta3<Unit, NoInfer<FromFrame>>);
 }
 
 /**

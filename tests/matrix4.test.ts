@@ -106,11 +106,8 @@ Deno.test('translation and scale transforms points and directions', () => {
     frame_world,
     delta_offset_world,
   );
-  const point_moved_world = transformPoint3(point_world, pose_world);
-  const delta_moved_world = transformDirection3(
-    delta_world,
-    pose_world,
-  );
+  const point_moved_world = transformPoint3(pose_world, point_world);
+  const delta_moved_world = transformDirection3(pose_world, delta_world);
 
   assertEquals(point_moved_world, [5, 7, 9]);
   assertEquals(delta_moved_world, [1, 2, 3]);
@@ -122,10 +119,7 @@ Deno.test('translation and scale transforms points and directions', () => {
     3,
     4,
   );
-  const delta_scaled_world = transformDirection3(
-    delta_world,
-    pose_scale_world,
-  );
+  const delta_scaled_world = transformDirection3(pose_scale_world, delta_world);
   assertEquals(delta_scaled_world, [2, 6, 12]);
 });
 
@@ -157,10 +151,7 @@ Deno.test('rotation matrix from quaternion rotates vectors', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_rotated_world = transformDirection3(
-    delta_x_world,
-    pose_rot_world,
-  );
+  const delta_rotated_world = transformDirection3(pose_rot_world, delta_x_world);
 
   assertAlmostEquals(delta_rotated_world[0], 0, 1e-12);
   assertAlmostEquals(delta_rotated_world[1], 1, 1e-12);
@@ -204,16 +195,16 @@ Deno.test('compose and invert rigid transforms', () => {
     quantity(meter, 0),
   );
   const point_moved_world = transformPoint3(
-    point_world,
     pose_rigid_world,
+    point_world,
   );
   assertAlmostEquals(point_moved_world[0], 10, 1e-12);
   assertAlmostEquals(point_moved_world[1], 1, 1e-12);
   assertAlmostEquals(point_moved_world[2], 0, 1e-12);
 
   const point_restored_world = transformPoint3(
-    point_moved_world,
     pose_inverse_world,
+    point_moved_world,
   );
   assertAlmostEquals(point_restored_world[0], 1, 1e-10);
   assertAlmostEquals(point_restored_world[1], 0, 1e-10);
@@ -242,13 +233,13 @@ Deno.test('compose and invert rigid transforms', () => {
     pose_shifty_world,
   );
   const point_composed_world = transformPoint3(
+    pose_composed_world,
     point3(
       frame_world,
       quantity(meter, 0),
       quantity(meter, 0),
       quantity(meter, 0),
     ),
-    pose_composed_world,
   );
   assertEquals(point_composed_world, [1, 2, 0]);
 
@@ -263,13 +254,13 @@ Deno.test('compose and invert rigid transforms', () => {
     pose_rot_world,
   );
   const point_mixed_world = transformPoint3(
+    pose_rot_then_shiftx_world,
     point3(
       frame_world,
       quantity(meter, 1),
       quantity(meter, 0),
       quantity(meter, 0),
     ),
-    pose_rot_then_shiftx_world,
   );
   assertAlmostEquals(point_mixed_world[0], 1, 1e-12);
   assertAlmostEquals(point_mixed_world[1], 1, 1e-12);
@@ -331,8 +322,8 @@ Deno.test('lookAt and perspective projection', () => {
     quantity(meter, -5),
   );
   const point_forward_view = transformPoint3(
-    point_forward_world,
     pose_view_world,
+    point_forward_world,
   );
   assertAlmostEquals(point_forward_view[0], 0, 1e-12);
   assertAlmostEquals(point_forward_view[1], 0, 1e-12);
@@ -346,22 +337,19 @@ Deno.test('lookAt and perspective projection', () => {
     quantity(meter, 1),
     quantity(meter, 10),
   );
-  const point_ndc = projectPoint3(point_forward_view, pose_ndc_view);
+  const point_ndc = projectPoint3(pose_ndc_view, point_forward_view);
   assertAlmostEquals(point_ndc[0], 0, 1e-12);
   assertAlmostEquals(point_ndc[1], 0, 1e-12);
   assertAlmostEquals(point_ndc[2], 0.7777777777777777, 1e-12);
 
   assertThrows(
     () =>
-      projectPoint3(
-        point3(
-          frame_view,
-          quantity(meter, 0),
-          quantity(meter, 0),
-          quantity(meter, 0),
-        ),
-        pose_ndc_view,
-      ),
+      projectPoint3(pose_ndc_view, point3(
+        frame_view,
+        quantity(meter, 0),
+        quantity(meter, 0),
+        quantity(meter, 0),
+      )),
     Error,
     'Perspective divide is undefined for w = 0',
   );
@@ -499,10 +487,7 @@ Deno.test('normal matrix from non-uniform scale', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_normalized_world = transformDirection3(
-    delta_x_world,
-    pose_normal_world,
-  );
+  const delta_normalized_world = transformDirection3(pose_normal_world, delta_x_world);
   assertAlmostEquals(delta_normalized_world[0], 0.5, 1e-12);
   assertAlmostEquals(delta_normalized_world[1], 0, 1e-12);
   assertAlmostEquals(delta_normalized_world[2], 0, 1e-12);
@@ -557,8 +542,8 @@ Deno.test('trs transform and cache reuse', () => {
     quantity(meter, 1),
   );
   const point_transformed_world = transformPoint3(
-    point_world,
     pose_world,
+    point_world,
   );
   assertEquals(point_transformed_world, [4, 6, 8]);
 
@@ -609,10 +594,7 @@ Deno.test('unsafe matrix helpers skip validation checks', () => {
   );
   assert(!Number.isFinite(pose_perspective_invalid[0]));
 
-  const point_projected = projectPoint3Unsafe(
-    point_origin_world,
-    pose_perspective_invalid,
-  );
+  const point_projected = projectPoint3Unsafe(pose_perspective_invalid, point_origin_world);
   assert(
     Number.isNaN(point_projected[0]) || !Number.isFinite(point_projected[0]),
   );

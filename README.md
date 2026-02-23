@@ -95,7 +95,7 @@ const pose_LV = mat4FromRigidTransform(
   delta_offset_L,
 );
 
-const point_L = transformPoint3(point_V, pose_LV);
+const point_L = transformPoint3(pose_LV, point_V);
 ```
 
 ## Common usage patterns
@@ -150,7 +150,7 @@ const point_L = transformPoint3(point_V, pose_LV);
 Examples:
 
 - `pose_LV: Mat4<'L', 'V', 'm'>` maps points in `V` to `L`, so:
-  `point_L = transformPoint3(point_V, pose_LV)`.
+  `point_L = transformPoint3(pose_LV, point_V)`.
 - `quat_turn_LV: Quaternion<'L', 'V'>` rotates vectors from `V` into `L`.
 - `delta_local: Delta3<'m', 'local'>` represents a translation/displacement in
   `local`.
@@ -158,7 +158,116 @@ Examples:
   to `local`.
 - `composeMat4(pose_LB, pose_BV)` returns `pose_LV` (chain `L <- B <- V`).
 
-## Full API reference
+## API overview
 
-See [`API_REFERENCE.md`](API_REFERENCE.md) for complete type definitions and all
-function signatures.
+This section documents the important public API and constraints without listing
+every overload.
+
+### Core types
+
+Units:
+
+- `UnitExpr`
+- `Dimensionless`
+- `UnitFromString<Expr>`
+- `UnitTag<Unit>`
+- `Quantity<Unit>`
+- `MulUnit<A, B>`, `DivUnit<A, B>`, `SqrtUnit<U>`
+
+Frames and geometry:
+
+- `FrameTag<Frame>`
+- `Point3<Unit, Frame>`
+- `Delta3<Unit, Frame>`
+- `Dir3<Frame>`
+- `Quaternion<ToFrame, FromFrame>`
+- `Mat4<ToFrame, FromFrame, TranslationUnit>`
+- `LinearMat4<ToFrame, FromFrame>`
+- `ProjectionMat4<ToFrame, FromFrame, DepthUnit>`
+
+### Constructors and tokens
+
+```ts
+unit<Expr extends string>(name: string extends Expr ? never : Expr): UnitTag<UnitFromString<Expr>>
+const dimensionlessUnit: UnitTag<Dimensionless>
+frame<Frame extends string>(name: Frame): FrameTag<Frame>
+
+quantity<Unit extends UnitExpr>(unitTag: UnitTag<Unit>, value: number): Quantity<Unit>
+dimensionless(value: number): Quantity<Dimensionless>
+valueOf<Unit extends UnitExpr>(value: Quantity<Unit>): number
+```
+
+Non-obvious constraints:
+
+- `unit(...)` accepts literal/narrow string types only.
+- `sqrt(...)` is compile-time guarded and only allowed for square-rootable
+  units.
+
+```ts
+sqrt<Unit extends UnitExpr>(
+  value: [SqrtUnit<Unit>] extends [never] ? never : Quantity<Unit>,
+): Quantity<SqrtUnit<Unit>>
+```
+
+### Scalar unit math
+
+- Arithmetic: `add`, `sub`, `neg`, `abs`, `scale`, `mul`, `div`, `sqrt`
+- Bounds: `min`, `max`, `clamp`, `clampUnsafe`
+- Comparisons: `eq`, `approxEq`, `lt`, `lte`, `gt`, `gte`
+- Aggregation: `sum`, `average`
+
+### 3D vector and point operations
+
+Construction:
+
+- `delta3`, `point3`, `dir3`, `zeroVec3`
+
+Affine/frame-safe operations:
+
+- `addVec3`, `subVec3`, `negVec3`, `scaleVec3`
+- `addPoint3`, `subPoint3Delta3`, `subPoint3`
+
+Geometry:
+
+- `dotVec3`, `crossVec3`
+- `lengthSquaredVec3`, `lengthVec3`
+- `distanceVec3`, `distancePoint3`
+- `normalizeVec3`, `normalizeVec3Unsafe`
+- `lerpVec3`
+- `projectVec3`, `projectVec3Unsafe`
+- `reflectVec3`, `reflectVec3Unsafe`
+- `angleBetweenVec3`, `angleBetweenVec3Unsafe`
+
+### Quaternion operations
+
+- Construction and identity: `quat`, `quatIdentity`
+- Algebra: `quatConjugate`, `quatNorm`, `quatNormSquared`, `composeQuats`
+- Normalization/inversion: `quatNormalize`, `quatNormalizeUnsafe`,
+  `quatInverse`, `quatInverseUnsafe`
+- Rotations: `rotateVec3ByQuat`, `rotateVec3ByQuatUnsafe`
+- Builders/interpolation: `quatFromAxisAngle`, `quatFromAxisAngleUnsafe`,
+  `quatFromEuler`, `quatFromEulerUnsafe`, `quatNlerp`, `quatNlerpUnsafe`,
+  `quatSlerp`, `quatSlerpUnsafe`
+
+### Matrix operations
+
+Construction:
+
+- `mat4`, `mat4Unsafe`, `mat4Identity`
+- `mat4FromTranslation`, `mat4FromScale`
+- `mat4FromQuaternion`, `mat4FromQuaternionUnsafe`
+- `mat4FromRigidTransform`
+- `mat4FromTRS`, `mat4FromTRSUnsafe`
+- `createTrsMat4Cache`
+- `mat4Perspective`, `mat4PerspectiveUnsafe`
+- `mat4LookAt`, `mat4LookAtUnsafe`
+
+Composition and transforms:
+
+- `transposeMat4`
+- `composeMat4`
+- `invertRigidMat4`, `invertRigidMat4Unsafe`
+- `normalMatrixFromMat4`, `normalMatrixFromMat4Unsafe`
+- `transformPoint3`
+- `transformDirection3`
+- `projectPoint3`, `projectPoint3Unsafe`

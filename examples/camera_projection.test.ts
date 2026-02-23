@@ -61,10 +61,10 @@ Deno.test('example: world point to NDC via lookAt and perspective projection', (
     quantity(meter, 0),
   );
   const point_subject_view = transformPoint3(
-    point_subject_world,
     pose_view_world,
+    point_subject_world,
   );
-  const point_subject_ndc = projectPoint3(point_subject_view, pose_ndc_view);
+  const point_subject_ndc = projectPoint3(pose_ndc_view, point_subject_view);
 
   assertAlmostEquals(point_subject_view[0], 0, 1e-12);
   assertAlmostEquals(point_subject_view[1], 0, 1e-12);
@@ -79,7 +79,7 @@ Deno.test('example: world point to NDC via lookAt and perspective projection', (
     quantity(meter, 1),
     quantity(meter, 0),
   );
-  const point_right_view = transformPoint3(point_right_world, pose_view_world);
-  const point_right_ndc = projectPoint3(point_right_view, pose_ndc_view);
+  const point_right_view = transformPoint3(pose_view_world, point_right_world);
+  const point_right_ndc = projectPoint3(pose_ndc_view, point_right_view);
   assert(point_right_ndc[0] > 0);
 });

@@ -725,8 +725,8 @@ export const mat4Perspective = <
  * Unsafe variant: performs no `w === 0` guard.
  * Degenerate inputs can yield `NaN`/`Infinity`.
  *
- * @param point Input point in projection source frame.
  * @param projection Projection matrix.
+ * @param point Input point in projection source frame.
  * @returns Point in normalized device coordinates.
  */
 export const projectPoint3Unsafe = <
@@ -734,8 +734,8 @@ export const projectPoint3Unsafe = <
   FromFrame extends string,
   DepthUnit extends UnitExpr,
 >(
-  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
   projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
+  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
 ): Point3<Dimensionless, ToFrame> => {
   const x = point[0];
   const y = point[1];
@@ -775,8 +775,8 @@ export const projectPoint3Unsafe = <
  *
  * Throws when homogeneous `w` is zero.
  *
- * @param point Input point in projection source frame.
  * @param projection Projection matrix.
+ * @param point Input point in projection source frame.
  * @returns Point in normalized device coordinates.
  * @throws {Error} When homogeneous `w` equals zero.
  */
@@ -785,8 +785,8 @@ export const projectPoint3 = <
   FromFrame extends string,
   DepthUnit extends UnitExpr,
 >(
-  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
   projection: ProjectionMat4<ToFrame, FromFrame, DepthUnit>,
+  point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
 ): Point3<Dimensionless, ToFrame> => {
   const clipW =
     projection[12] * point[0]
@@ -798,7 +798,7 @@ export const projectPoint3 = <
     throw new Error('Perspective divide is undefined for w = 0');
   }
 
-  return projectPoint3Unsafe(point, projection);
+  return projectPoint3Unsafe(projection, point);
 };
 
 /**
@@ -1416,8 +1416,8 @@ export const normalMatrixFromMat4 = <
  *
  * Includes translation.
  *
- * @param point Input point.
  * @param matrix Affine transform.
+ * @param point Input point.
  * @returns Transformed point.
  */
 export function transformPoint3<
@@ -1425,8 +1425,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  point: Point3<NoInfer<TranslationUnit>, NoInfer<FromFrame>>,
   matrix: Mat4<ToFrame, FromFrame, TranslationUnit>,
+  point: Point3<NoInfer<TranslationUnit>, NoInfer<FromFrame>>,
 ): Point3<TranslationUnit, ToFrame>;
 
 /**
@@ -1434,8 +1434,8 @@ export function transformPoint3<
  *
  * Unit can be any expression because translation is absent.
  *
- * @param point Input point.
  * @param matrix Linear transform.
+ * @param point Input point.
  * @returns Transformed point.
  */
 export function transformPoint3<
@@ -1443,8 +1443,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  point: Point3<Unit, NoInfer<FromFrame>>,
   matrix: LinearMat4<ToFrame, FromFrame>,
+  point: Point3<Unit, NoInfer<FromFrame>>,
 ): Point3<Unit, ToFrame>;
 
 export function transformPoint3<
@@ -1453,8 +1453,8 @@ export function transformPoint3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  point: Point3<Unit, NoInfer<FromFrame>>,
   matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  point: Point3<Unit, NoInfer<FromFrame>>,
 ): Point3<Unit, ToFrame> {
   const x = point[0];
   const y = point[1];
@@ -1487,8 +1487,8 @@ export function transformPoint3<
  *
  * Ignores translation component.
  *
- * @param direction Input displacement direction.
  * @param matrix Transform matrix.
+ * @param direction Input displacement direction.
  * @returns Transformed displacement direction.
  */
 export function transformDirection3<
@@ -1497,15 +1497,15 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  direction: Delta3<Unit, NoInfer<FromFrame>>,
   matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  direction: Delta3<Unit, NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame>;
 
 /**
  * Transforms a unitless direction while preserving direction typing.
  *
- * @param direction Input unitless direction.
  * @param matrix Transform matrix.
+ * @param direction Input unitless direction.
  * @returns Transformed unitless direction.
  */
 export function transformDirection3<
@@ -1513,8 +1513,8 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  direction: Dir3<NoInfer<FromFrame>>,
   matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  direction: Dir3<NoInfer<FromFrame>>,
 ): Dir3<ToFrame>;
 
 export function transformDirection3<
@@ -1523,8 +1523,8 @@ export function transformDirection3<
   ToFrame extends string,
   FromFrame extends string,
 >(
-  direction: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
   matrix: Mat4<ToFrame, FromFrame, MatrixTranslationUnit>,
+  direction: Delta3<Unit, NoInfer<FromFrame>> | Dir3<NoInfer<FromFrame>>,
 ): Delta3<Unit, ToFrame> | Dir3<ToFrame> {
   const x = direction[0];
   const y = direction[1];

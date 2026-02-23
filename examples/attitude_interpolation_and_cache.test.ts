@@ -40,10 +40,7 @@ Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_forward_world = rotateVec3ByQuat(
-    delta_forward_body,
-    quat_mid_world_body,
-  );
+  const delta_forward_world = rotateVec3ByQuat(quat_mid_world_body, delta_forward_body);
   assertAlmostEquals(delta_forward_world[0], Math.SQRT1_2, 1e-12);
   assertAlmostEquals(delta_forward_world[1], Math.SQRT1_2, 1e-12);
 
@@ -104,14 +101,14 @@ Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const point_world = transformPoint3(point_body, pose_world_body);
+  const point_world = transformPoint3(pose_world_body, point_body);
   const point_shifted_world = transformPoint3(
-    point_body,
     buildPoseWorldBody(
       delta_offset_shifted_world,
       quat_mid_world_body,
       dir_scale_body,
     ),
+    point_body,
   );
   assertAlmostEquals(point_shifted_world[0] - point_world[0], 1, 1e-12);
 });

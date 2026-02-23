@@ -163,16 +163,27 @@ subPoint3(point_world, point_body);
 subPoint3(point_world, point_other_world);
 
 const quat_identity_body_world = quat(frame_body, frame_world, 0, 0, 0, 1);
-rotateVec3ByQuat(delta_world, quat_identity_body_world);
+rotateVec3ByQuat(quat_identity_body_world, delta_world);
 
 // @ts-expect-error wrong input frame for rotation
-rotateVec3ByQuat(delta_body, quat_identity_body_world);
+rotateVec3ByQuat(quat_identity_body_world, delta_body);
 
 const pose_world_world = mat4FromTranslation(frame_world, delta_world);
+transformPoint3(pose_world_world, point_world);
+
+// @ts-expect-error transformPoint3 requires matrix-first argument order
 transformPoint3(point_world, pose_world_world);
 
+const pose_seconds_translation_world = mat4FromTranslation(
+  frame_world,
+  delta_other_world,
+);
+
+// @ts-expect-error affine transform translation unit must match point unit
+transformPoint3(pose_seconds_translation_world, point_world);
+
 // @ts-expect-error wrong point frame
-transformPoint3(point_body, pose_world_world);
+transformPoint3(pose_world_world, point_body);
 
 const pose_world_world_generic = mat4(
   frame_world,
@@ -199,7 +210,7 @@ const pose_world_world_generic = mat4(
 );
 
 // @ts-expect-error non-linear dimensionless matrix cannot transform unitful point
-transformPoint3(point_world, pose_world_world_generic);
+transformPoint3(pose_world_world_generic, point_world);
 
 const dir_axisz_world = dir3(
   frame_world,
@@ -214,6 +225,10 @@ const pose_world_world_rot = mat4FromQuaternion(
   quatFromAxisAngle(frame_world, dir_axisz_world, Math.PI / 2),
 );
 composeMat4(pose_world_world_rot, pose_world_world);
+const pose_body_body = mat4FromTranslation(frame_body, delta_body);
+
+// @ts-expect-error compose requires matching frame chain (outer.from == inner.to)
+composeMat4(pose_world_world, pose_body_body);
 
 // @ts-expect-error axis-angle requires direction type, not unitful displacement
 quatFromAxisAngle(frame_world, delta_world, Math.PI / 2);

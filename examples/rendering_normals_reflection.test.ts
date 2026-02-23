@@ -61,10 +61,7 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
     quantity(dimensionlessUnit, 0),
     quantity(dimensionlessUnit, 1),
   );
-  const delta_normal_world = transformDirection3(
-    dir_normal_object,
-    normalMatrixFromMat4(pose_world_object),
-  );
+  const delta_normal_world = transformDirection3(normalMatrixFromMat4(pose_world_object), dir_normal_object);
   const dir_normal_world = normalizeVec3(delta_normal_world);
 
   const delta_incoming_world = delta3(
