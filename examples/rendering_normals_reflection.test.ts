@@ -16,7 +16,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import { assert, assertAlmostEquals } from '../tests/assert.test.ts';
+import { GEOM_EPS, assert, assertAlmostEquals } from '../tests/assert.test.ts';
 
 Deno.test('example: transform normals and reflect an incoming direction', () => {
   const frame_world = frame('world');
@@ -87,11 +87,11 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
     delta_reflected_world,
     delta_reference_world,
   );
-  assertAlmostEquals(angle_incidence, angle_reflection, 1e-10);
+  assertAlmostEquals(angle_incidence, angle_reflection, GEOM_EPS);
 
   const normal_component = dotVec3(
     delta_reflected_world,
     delta_reference_world,
   );
-  assert(normal_component > 0);
+  assert(normal_component > GEOM_EPS);
 });

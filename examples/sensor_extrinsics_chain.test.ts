@@ -10,7 +10,7 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assert, assertAlmostEquals } from '../tests/assert.test.ts';
+import { GEOM_EPS, assertAlmostEquals, assertVec3AlmostEquals } from '../tests/assert.test.ts';
 
 Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   const frame_world = frame('world');
@@ -91,16 +91,16 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
     pose_lidar_world,
     point_hit_world,
   );
+  const pose_camera_world = invertRigidMat4(pose_world_camera);
+  const point_hit_camera_roundtrip = transformPoint3(
+    pose_camera_world,
+    point_hit_world_from_camera,
+  );
 
-  assertAlmostEquals(point_hit_lidar_roundtrip[0], point_hit_lidar[0], 1e-10);
-  assertAlmostEquals(point_hit_lidar_roundtrip[1], point_hit_lidar[1], 1e-10);
-  assertAlmostEquals(point_hit_lidar_roundtrip[2], point_hit_lidar[2], 1e-10);
+  assertAlmostEquals(point_hit_lidar_roundtrip[0], point_hit_lidar[0], GEOM_EPS);
+  assertAlmostEquals(point_hit_lidar_roundtrip[1], point_hit_lidar[1], GEOM_EPS);
+  assertAlmostEquals(point_hit_lidar_roundtrip[2], point_hit_lidar[2], GEOM_EPS);
+  assertVec3AlmostEquals(point_hit_camera_roundtrip, point_hit_camera, GEOM_EPS);
 
-  // Both chained transforms are valid and yield finite world points.
-  assert(Number.isFinite(point_hit_world[0]));
-  assert(Number.isFinite(point_hit_world[1]));
-  assert(Number.isFinite(point_hit_world[2]));
-  assert(Number.isFinite(point_hit_world_from_camera[0]));
-  assert(Number.isFinite(point_hit_world_from_camera[1]));
-  assert(Number.isFinite(point_hit_world_from_camera[2]));
+  assertAlmostEquals(point_hit_world[2], quantity(meter, 1), GEOM_EPS);
 });

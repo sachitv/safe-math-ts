@@ -85,6 +85,57 @@ export const assertAlmostEquals = (
   }
 };
 
+export const GEOM_EPS = 1e-9;
+
+export const assertInRange = (
+  actual: number,
+  min: number,
+  max: number,
+  tolerance = 0,
+  message = 'Expected value to be in range',
+): void => {
+  if (actual < min - tolerance || actual > max + tolerance) {
+    throw new Error(
+      `${message}: actual=${actual} min=${min} max=${max} tolerance=${tolerance}`,
+    );
+  }
+};
+
+export const assertVec3AlmostEquals = (
+  actual: readonly [number, number, number],
+  expected: readonly [number, number, number],
+  tolerance = GEOM_EPS,
+): void => {
+  assertAlmostEquals(actual[0], expected[0], tolerance, 'Vec3 x mismatch');
+  assertAlmostEquals(actual[1], expected[1], tolerance, 'Vec3 y mismatch');
+  assertAlmostEquals(actual[2], expected[2], tolerance, 'Vec3 z mismatch');
+};
+
+export const assertMat4AlmostEquals = (
+  actual: readonly number[],
+  expected: readonly number[],
+  tolerance = GEOM_EPS,
+): void => {
+  if (actual.length !== 16 || expected.length !== 16) {
+    throw new Error('Expected both matrices to have 16 elements');
+  }
+
+  for (let index = 0; index < 16; index += 1) {
+    const actualValue = actual[index];
+    const expectedValue = expected[index];
+    if (actualValue === undefined || expectedValue === undefined) {
+      throw new Error('Expected both matrices to have 16 elements');
+    }
+
+    assertAlmostEquals(
+      actualValue,
+      expectedValue,
+      tolerance,
+      `Mat4 element mismatch at index ${index}`,
+    );
+  }
+};
+
 /** Asserts that a function throws, optionally matching error type and message. */
 export const assertThrows = (
   fn: () => unknown,

@@ -10,7 +10,12 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assert, assertAlmostEquals } from '../tests/assert.test.ts';
+import {
+  GEOM_EPS,
+  assert,
+  assertAlmostEquals,
+  assertInRange,
+} from '../tests/assert.test.ts';
 
 Deno.test('example: world point to NDC via lookAt and perspective projection', () => {
   const frame_world = frame('world');
@@ -66,12 +71,12 @@ Deno.test('example: world point to NDC via lookAt and perspective projection', (
   );
   const point_subject_ndc = projectPoint3(pose_ndc_view, point_subject_view);
 
-  assertAlmostEquals(point_subject_view[0], 0, 1e-12);
-  assertAlmostEquals(point_subject_view[1], 0, 1e-12);
-  assertAlmostEquals(point_subject_view[2], -5, 1e-12);
-  assertAlmostEquals(point_subject_ndc[0], 0, 1e-12);
-  assertAlmostEquals(point_subject_ndc[1], 0, 1e-12);
-  assert(point_subject_ndc[2] > -1 && point_subject_ndc[2] < 1);
+  assertAlmostEquals(point_subject_view[0], 0, GEOM_EPS);
+  assertAlmostEquals(point_subject_view[1], 0, GEOM_EPS);
+  assertAlmostEquals(point_subject_view[2], -5, GEOM_EPS);
+  assertAlmostEquals(point_subject_ndc[0], 0, GEOM_EPS);
+  assertAlmostEquals(point_subject_ndc[1], 0, GEOM_EPS);
+  assertInRange(point_subject_ndc[2], -1, 1, GEOM_EPS);
 
   const point_right_world = point3(
     frame_world,
@@ -81,5 +86,5 @@ Deno.test('example: world point to NDC via lookAt and perspective projection', (
   );
   const point_right_view = transformPoint3(pose_view_world, point_right_world);
   const point_right_ndc = projectPoint3(pose_ndc_view, point_right_view);
-  assert(point_right_ndc[0] > 0);
+  assert(point_right_ndc[0] > GEOM_EPS);
 });

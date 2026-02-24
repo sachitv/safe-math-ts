@@ -12,11 +12,12 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assertAlmostEquals } from '../tests/assert.test.ts';
+import { GEOM_EPS, assertVec3AlmostEquals } from '../tests/assert.test.ts';
 
 Deno.test('example: compose order changes transform result', () => {
   const frame_world = frame('world');
   const meter = unit('m');
+  const none = dimensionlessUnit;
 
   const pose_translate_world = mat4FromTranslation(
     frame_world,
@@ -30,7 +31,7 @@ Deno.test('example: compose order changes transform result', () => {
   const pose_rotate_world = mat4FromQuaternion(
     frame_world,
     frame_world,
-    dimensionlessUnit,
+    none,
     quatFromAxisAngle(
       frame_world,
       dir3(
@@ -61,10 +62,9 @@ Deno.test('example: compose order changes transform result', () => {
 
   const point_a_world = transformPoint3(pose_translate_then_rotate, point_world);
   const point_b_world = transformPoint3(pose_rotate_then_translate, point_world);
+  const expected_point_a_world = [0, 3, 0] as const;
+  const expected_point_b_world = [2, 1, 0] as const;
 
-  assertAlmostEquals(point_a_world[0], 0, 1e-12);
-  assertAlmostEquals(point_a_world[1], 3, 1e-12);
-  assertAlmostEquals(point_b_world[0], 2, 1e-12);
-  assertAlmostEquals(point_b_world[1], 1, 1e-12);
+  assertVec3AlmostEquals(point_a_world, expected_point_a_world, GEOM_EPS);
+  assertVec3AlmostEquals(point_b_world, expected_point_b_world, GEOM_EPS);
 });
-

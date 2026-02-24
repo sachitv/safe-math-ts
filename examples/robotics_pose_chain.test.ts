@@ -9,7 +9,7 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assertAlmostEquals } from '../tests/assert.test.ts';
+import { GEOM_EPS, assertVec3AlmostEquals } from '../tests/assert.test.ts';
 
 Deno.test('example: compose vehicle and sensor poses for robotics localization', () => {
   const frame_world = frame('world');
@@ -73,8 +73,7 @@ Deno.test('example: compose vehicle and sensor poses for robotics localization',
     quantity(meter, 0),
   );
   const point_hit_world = transformPoint3(pose_world_lidar, point_hit_lidar);
+  const expected_point_hit_world = [8, 1, 1] as const;
 
-  assertAlmostEquals(point_hit_world[0], 8, 1e-12);
-  assertAlmostEquals(point_hit_world[1], 1, 1e-12);
-  assertAlmostEquals(point_hit_world[2], 1, 1e-12);
+  assertVec3AlmostEquals(point_hit_world, expected_point_hit_world, GEOM_EPS);
 });

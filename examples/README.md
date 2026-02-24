@@ -22,3 +22,14 @@ These are executable, test-backed examples. They are run automatically by
   perpendicular after non-uniform scale.
 - `attitude_interpolation_and_cache.test.ts`: interpolate orientation with SLERP
   and reuse TRS transform cache results.
+- `safe_api_failure_modes.test.ts`: demonstrate safe API validation failures for
+  degenerate camera and vector inputs.
+
+## Conventions
+
+- Angles are in radians.
+- `composeMat4(a, b)` means apply `b` first, then `a`.
+- `mat4Perspective` in these examples targets NDC depth range `[-1, 1]`.
+- Quantities are runtime numbers; unit safety is enforced at compile time.
+- Prefer invariant checks (round-trips, orthogonality, expected vectors) over
+  finiteness-only checks.

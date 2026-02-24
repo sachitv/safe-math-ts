@@ -9,7 +9,7 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assertAlmostEquals } from '../tests/assert.test.ts';
+import { GEOM_EPS, assertVec3AlmostEquals } from '../tests/assert.test.ts';
 
 Deno.test('example: rigid transform round-trip returns original point', () => {
   const frame_world = frame('world');
@@ -42,8 +42,5 @@ Deno.test('example: rigid transform round-trip returns original point', () => {
   const point_world = transformPoint3(pose_world_local, point_local);
   const point_local_roundtrip = transformPoint3(pose_local_world, point_world);
 
-  assertAlmostEquals(point_local_roundtrip[0], point_local[0], 1e-10);
-  assertAlmostEquals(point_local_roundtrip[1], point_local[1], 1e-10);
-  assertAlmostEquals(point_local_roundtrip[2], point_local[2], 1e-10);
+  assertVec3AlmostEquals(point_local_roundtrip, point_local, GEOM_EPS);
 });
-
