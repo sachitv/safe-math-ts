@@ -80,6 +80,7 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
     pose_world_lidar,
     point_hit_lidar,
   );
+  // Unit-test naming: keep frame suffix explicit for assertion clarity.
   const point_hit_world_from_camera = transformPoint3(
     pose_world_camera,
     point_hit_camera,
