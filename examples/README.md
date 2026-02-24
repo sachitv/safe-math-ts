@@ -24,6 +24,18 @@ These are executable, test-backed examples. They are run automatically by
   and reuse TRS transform cache results.
 - `safe_api_failure_modes.test.ts`: demonstrate safe API validation failures for
   degenerate camera and vector inputs.
+- `end_to_end_projection_chain.test.ts`: run an end-to-end
+  world->vehicle->camera->view->NDC pipeline.
+- `safe_vs_unsafe_apis.test.ts`: contrast safe and unsafe behavior on valid and
+  degenerate inputs.
+- `quaternion_nlerp_vs_slerp.test.ts`: compare interpolation behavior of NLERP
+  and SLERP.
+- `normal_matrix_failure_recovery.test.ts`: show a practical fallback when
+  normal-matrix construction fails.
+- `projection_edge_behavior.test.ts`: check near/far edges, behind-camera
+  projection, and `w = 0` handling.
+- `cookbook_constant_accel_loop.test.ts`: demonstrate a unit-safe step loop for
+  constant acceleration integration.
 
 ## Conventions
 

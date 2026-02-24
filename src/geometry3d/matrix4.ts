@@ -101,6 +101,7 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
  *
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
+ * Values follow row-major layout and translation lives in indices 3/7/11.
  * Unsafe variant: slices to 16 values without length validation.
  *
  * @param toFrameTag Destination frame token.
@@ -130,6 +131,7 @@ export const mat4Unsafe = <
  *
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
+ * Values follow row-major layout and translation lives in indices 3/7/11.
  * Throws when `values.length !== 16`.
  *
  * @param toFrameTag Destination frame token.
