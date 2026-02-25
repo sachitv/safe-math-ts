@@ -6,6 +6,15 @@ Development workflow for `safe-math-ts`.
 
 - Deno 2.x
 
+## Setup
+
+```sh
+deno task install-hooks
+```
+
+This installs the repository pre-commit hook. Every commit runs `deno fmt`,
+`deno lint`, and `deno test`.
+
 ## Local Commands
 
 ```sh

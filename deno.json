@@ -12,6 +12,8 @@
     }
   },
   "tasks": {
+    "precommit": "deno fmt && deno lint && deno test",
+    "install-hooks": "deno run -A scripts/install_hooks.ts",
     "check": "deno check mod.ts",
     "test": "deno test --coverage=coverage --coverage-raw-data-only",
     "coverage": "deno coverage coverage",
