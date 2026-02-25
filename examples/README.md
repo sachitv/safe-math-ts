@@ -40,6 +40,7 @@ These are executable, test-backed examples. They are run automatically by
 ## Conventions
 
 - Angles are in radians.
+- Matrices are stored in column-major order.
 - `composeMat4(a, b)` means apply `b` first, then `a`.
 - `mat4Perspective` in these examples targets NDC depth range `[-1, 1]`.
 - Quantities are runtime numbers; unit safety is enforced at compile time.

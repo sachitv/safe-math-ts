@@ -185,29 +185,29 @@ transformPoint3(pose_seconds_translation_world, point_world);
 // @ts-expect-error wrong point frame
 transformPoint3(pose_world_world, point_body);
 
-const pose_world_world_generic = mat4(
-  frame_world,
-  frame_world,
-  dimensionlessUnit,
-  [
-    1,
-    0,
-    0,
-    1,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1,
-  ],
-);
+  const pose_world_world_generic = mat4(
+    frame_world,
+    frame_world,
+    dimensionlessUnit,
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+    ],
+  );
 
 // @ts-expect-error non-linear dimensionless matrix cannot transform unitful point
 transformPoint3(pose_world_world_generic, point_world);

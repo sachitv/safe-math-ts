@@ -106,6 +106,24 @@ Deno.test('translation and scale transforms points and directions', () => {
     frame_world,
     delta_offset_world,
   );
+  assertEquals(pose_world, [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    4,
+    5,
+    6,
+    1,
+  ]);
   const point_moved_world = transformPoint3(pose_world, point_world);
   const delta_moved_world = transformDirection3(pose_world, delta_world);
 

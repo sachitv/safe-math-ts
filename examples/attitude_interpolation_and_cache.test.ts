@@ -90,7 +90,7 @@ Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
     quat_mid_world_body,
     dir_scale_body,
   );
-  assert(Math.abs(pose_shifted_world_body[3] - pose_world_body[3]) > GEOM_EPS);
+  assert(Math.abs(pose_shifted_world_body[12] - pose_world_body[12]) > GEOM_EPS);
 
   const point_body = point3(
     frame_body,

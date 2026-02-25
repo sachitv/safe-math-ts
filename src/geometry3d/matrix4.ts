@@ -30,7 +30,7 @@ const asQuantity = <Unit extends UnitExpr>(value: number): Quantity<Unit> =>
 /**
  * Casts 16 numeric values into a branded affine matrix.
  *
- * @param values Matrix coefficients in row-major order.
+ * @param values Matrix coefficients in column-major order.
  * @returns Branded affine matrix.
  */
 const asMat4 = <
@@ -56,7 +56,7 @@ const asLinearMat4 = <ToFrame extends string, FromFrame extends string>(
 /**
  * Casts 16 numeric values into a branded projection matrix.
  *
- * @param values Matrix coefficients in row-major order.
+ * @param values Matrix coefficients in column-major order.
  * @returns Branded projection matrix.
  */
 const asProjectionMat4 = <
@@ -97,17 +97,17 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
 ): Point3<Unit, Frame> => [x, y, z] as unknown as Point3<Unit, Frame>;
 
 /**
- * Creates a typed 4x4 matrix from 16 row-major values.
+ * Creates a typed 4x4 matrix from 16 column-major values.
  *
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
- * Values follow row-major layout and translation lives in indices 3/7/11.
+ * Values follow column-major layout and translation lives in indices 12/13/14.
  * Unsafe variant: slices to 16 values without length validation.
  *
  * @param toFrameTag Destination frame token.
  * @param fromFrameTag Source frame token.
  * @param translationUnitTag Translation unit token.
- * @param values Matrix coefficients in row-major order.
+ * @param values Matrix coefficients in column-major order.
  * @returns Typed affine matrix.
  */
 export const mat4Unsafe = <
@@ -127,17 +127,17 @@ export const mat4Unsafe = <
 };
 
 /**
- * Creates a typed 4x4 matrix from 16 row-major values.
+ * Creates a typed 4x4 matrix from 16 column-major values.
  *
  * `toFrameTag`, `fromFrameTag`, and `translationUnitTag` enforce explicit
  * frame/unit declaration at construction.
- * Values follow row-major layout and translation lives in indices 3/7/11.
+ * Values follow column-major layout and translation lives in indices 12/13/14.
  * Throws when `values.length !== 16`.
  *
  * @param toFrameTag Destination frame token.
  * @param fromFrameTag Source frame token.
  * @param translationUnitTag Translation unit token.
- * @param values Matrix coefficients in row-major order.
+ * @param values Matrix coefficients in column-major order.
  * @returns Typed affine matrix.
  * @throws {Error} When `values` does not contain exactly 16 entries.
  */
@@ -223,18 +223,18 @@ export const mat4FromTranslation = <
     1,
     0,
     0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
     translation[0],
-    0,
-    1,
-    0,
     translation[1],
-    0,
-    0,
-    1,
     translation[2],
-    0,
-    0,
-    0,
     1,
   ]));
 
@@ -316,15 +316,15 @@ export const mat4FromQuaternionUnsafe = <
   return asLinearMat4(
     asMat4<ToFrame, FromFrame, Dimensionless>([
       1 - 2 * (yy + zz),
-      2 * (xy - wz),
-      2 * (xz + wy),
-      0,
       2 * (xy + wz),
-      1 - 2 * (xx + zz),
-      2 * (yz - wx),
-      0,
       2 * (xz - wy),
+      0,
+      2 * (xy - wz),
+      1 - 2 * (xx + zz),
       2 * (yz + wx),
+      0,
+      2 * (xz + wy),
+      2 * (yz - wx),
       1 - 2 * (xx + yy),
       0,
       0,
@@ -396,18 +396,18 @@ export const mat4FromRigidTransform = <
     rotationMatrix[0],
     rotationMatrix[1],
     rotationMatrix[2],
-    translation[0],
+    rotationMatrix[3],
     rotationMatrix[4],
     rotationMatrix[5],
     rotationMatrix[6],
-    translation[1],
+    rotationMatrix[7],
     rotationMatrix[8],
     rotationMatrix[9],
     rotationMatrix[10],
+    rotationMatrix[11],
+    translation[0],
+    translation[1],
     translation[2],
-    0,
-    0,
-    0,
     1,
   ]);
 };
@@ -457,20 +457,20 @@ export const mat4FromTRSUnsafe = <
 
   return asMat4<ToFrame, FromFrame, TranslationUnit>([
     (1 - 2 * (yy + zz)) * sx,
-    (2 * (xy - wz)) * sy,
-    (2 * (xz + wy)) * sz,
-    translation[0],
     (2 * (xy + wz)) * sx,
-    (1 - 2 * (xx + zz)) * sy,
-    (2 * (yz - wx)) * sz,
-    translation[1],
     (2 * (xz - wy)) * sx,
+    0,
+    (2 * (xy - wz)) * sy,
+    (1 - 2 * (xx + zz)) * sy,
     (2 * (yz + wx)) * sy,
+    0,
+    (2 * (xz + wy)) * sz,
+    (2 * (yz - wx)) * sz,
     (1 - 2 * (xx + yy)) * sz,
+    0,
+    translation[0],
+    translation[1],
     translation[2],
-    0,
-    0,
-    0,
     1,
   ]);
 };
@@ -664,10 +664,10 @@ export const mat4PerspectiveUnsafe = <
     0,
     0,
     (far + near) * rangeInverse,
-    (2 * far * near) * rangeInverse,
-    0,
-    0,
     -1,
+    0,
+    0,
+    (2 * far * near) * rangeInverse,
     0,
   ]);
 };
@@ -745,23 +745,23 @@ export const projectPoint3Unsafe = <
 
   const clipX =
     projection[0] * x
-    + projection[1] * y
-    + projection[2] * z
-    + projection[3];
+    + projection[4] * y
+    + projection[8] * z
+    + projection[12];
   const clipY =
-    projection[4] * x
+    projection[1] * x
     + projection[5] * y
-    + projection[6] * z
-    + projection[7];
+    + projection[9] * z
+    + projection[13];
   const clipZ =
-    projection[8] * x
-    + projection[9] * y
+    projection[2] * x
+    + projection[6] * y
     + projection[10] * z
-    + projection[11];
+    + projection[14];
   const clipW =
-    projection[12] * x
-    + projection[13] * y
-    + projection[14] * z
+    projection[3] * x
+    + projection[7] * y
+    + projection[11] * z
     + projection[15];
 
   const invW = 1 / clipW;
@@ -791,9 +791,9 @@ export const projectPoint3 = <
   point: Point3<NoInfer<DepthUnit>, NoInfer<FromFrame>>,
 ): Point3<Dimensionless, ToFrame> => {
   const clipW =
-    projection[12] * point[0]
-    + projection[13] * point[1]
-    + projection[14] * point[2]
+    projection[3] * point[0]
+    + projection[7] * point[1]
+    + projection[11] * point[2]
     + projection[15];
 
   if (clipW === 0) {
@@ -870,20 +870,20 @@ export const mat4LookAtUnsafe = <
 
   return asMat4<ToFrame, FromFrame, TranslationUnit>([
     dir_right_x,
-    dir_right_y,
-    dir_right_z,
-    asQuantity<TranslationUnit>(tx),
     dir_up_orthogonal_x,
-    dir_up_orthogonal_y,
-    dir_up_orthogonal_z,
-    asQuantity<TranslationUnit>(ty),
     -dir_forward_x,
+    0,
+    dir_right_y,
+    dir_up_orthogonal_y,
     -dir_forward_y,
+    0,
+    dir_right_z,
+    dir_up_orthogonal_z,
     -dir_forward_z,
+    0,
+    asQuantity<TranslationUnit>(tx),
+    asQuantity<TranslationUnit>(ty),
     asQuantity<TranslationUnit>(tz),
-    0,
-    0,
-    0,
     1,
   ]);
 };
@@ -1004,7 +1004,7 @@ export function transposeMat4<
 }
 
 /**
- * Multiplies two raw 4x4 matrices in row-major order.
+ * Multiplies two raw 4x4 matrices in column-major order.
  *
  * @param left Left matrix values.
  * @param right Right matrix values.
@@ -1016,13 +1016,13 @@ const multiplyRaw = (
 ): number[] => {
   const output = new Array<number>(16);
 
-  for (let row = 0; row < 4; row += 1) {
-    const rowOffset = row * 4;
-    for (let column = 0; column < 4; column += 1) {
-      output[rowOffset + column] = left[rowOffset]! * right[column]! +
-        left[rowOffset + 1]! * right[column + 4]! +
-        left[rowOffset + 2]! * right[column + 8]! +
-        left[rowOffset + 3]! * right[column + 12]!;
+  for (let column = 0; column < 4; column += 1) {
+    const columnOffset = column * 4;
+    for (let row = 0; row < 4; row += 1) {
+      output[columnOffset + row] = left[row]! * right[columnOffset]! +
+        left[row + 4]! * right[columnOffset + 1]! +
+        left[row + 8]! * right[columnOffset + 2]! +
+        left[row + 12]! * right[columnOffset + 3]!;
     }
   }
 
@@ -1157,23 +1157,23 @@ const assertRigidTransform = (
   value: readonly number[],
   epsilon: number,
 ): void => {
-  const row0x = value[0]!;
-  const row0y = value[1]!;
-  const row0z = value[2]!;
-  const row1x = value[4]!;
-  const row1y = value[5]!;
-  const row1z = value[6]!;
-  const row2x = value[8]!;
-  const row2y = value[9]!;
-  const row2z = value[10]!;
+  const col0x = value[0]!;
+  const col0y = value[1]!;
+  const col0z = value[2]!;
+  const col1x = value[4]!;
+  const col1y = value[5]!;
+  const col1z = value[6]!;
+  const col2x = value[8]!;
+  const col2y = value[9]!;
+  const col2z = value[10]!;
 
-  const norm0 = row0x * row0x + row0y * row0y + row0z * row0z;
-  const norm1 = row1x * row1x + row1y * row1y + row1z * row1z;
-  const norm2 = row2x * row2x + row2y * row2y + row2z * row2z;
+  const norm0 = col0x * col0x + col0y * col0y + col0z * col0z;
+  const norm1 = col1x * col1x + col1y * col1y + col1z * col1z;
+  const norm2 = col2x * col2x + col2y * col2y + col2z * col2z;
 
-  const dot01 = row0x * row1x + row0y * row1y + row0z * row1z;
-  const dot02 = row0x * row2x + row0y * row2y + row0z * row2z;
-  const dot12 = row1x * row2x + row1y * row2y + row1z * row2z;
+  const dot01 = col0x * col1x + col0y * col1y + col0z * col1z;
+  const dot02 = col0x * col2x + col0y * col2y + col0z * col2z;
+  const dot12 = col1x * col2x + col1y * col2y + col1z * col2z;
   const hasFiniteNorms =
     Number.isFinite(norm0)
     && Number.isFinite(norm1)
@@ -1187,9 +1187,9 @@ const assertRigidTransform = (
     && isApproximately(dot02, 0, epsilon)
     && isApproximately(dot12, 0, epsilon);
   const hasAffineBottomRow =
-    isApproximately(value[12]!, 0, epsilon)
-    && isApproximately(value[13]!, 0, epsilon)
-    && isApproximately(value[14]!, 0, epsilon)
+    isApproximately(value[3]!, 0, epsilon)
+    && isApproximately(value[7]!, 0, epsilon)
+    && isApproximately(value[11]!, 0, epsilon)
     && isApproximately(value[15]!, 1, epsilon);
   const isRigid =
     hasFiniteNorms
@@ -1237,18 +1237,18 @@ export function invertRigidMat4Unsafe<
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): Mat4<FromFrame, ToFrame, TranslationUnit> {
   const r00 = value[0];
-  const r01 = value[1];
-  const r02 = value[2];
-  const r10 = value[4];
+  const r10 = value[1];
+  const r20 = value[2];
+  const r01 = value[4];
   const r11 = value[5];
-  const r12 = value[6];
-  const r20 = value[8];
-  const r21 = value[9];
+  const r21 = value[6];
+  const r02 = value[8];
+  const r12 = value[9];
   const r22 = value[10];
 
-  const tx = value[3];
-  const ty = value[7];
-  const tz = value[11];
+  const tx = value[12];
+  const ty = value[13];
+  const tz = value[14];
 
   const inverseTx = -(r00 * tx + r10 * ty + r20 * tz);
   const inverseTy = -(r01 * tx + r11 * ty + r21 * tz);
@@ -1256,20 +1256,20 @@ export function invertRigidMat4Unsafe<
 
   return asMat4<FromFrame, ToFrame, TranslationUnit>([
     r00,
-    r10,
-    r20,
-    inverseTx,
     r01,
-    r11,
-    r21,
-    inverseTy,
     r02,
+    0,
+    r10,
+    r11,
     r12,
+    0,
+    r20,
+    r21,
     r22,
+    0,
+    inverseTx,
+    inverseTy,
     inverseTz,
-    0,
-    0,
-    0,
     1,
   ]);
 }
@@ -1332,13 +1332,13 @@ export const normalMatrixFromMat4Unsafe = <
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): LinearMat4<ToFrame, FromFrame> => {
   const a = value[0];
-  const b = value[1];
-  const c = value[2];
-  const d = value[4];
+  const b = value[4];
+  const c = value[8];
+  const d = value[1];
   const e = value[5];
-  const f = value[6];
-  const g = value[8];
-  const h = value[9];
+  const f = value[9];
+  const g = value[2];
+  const h = value[6];
   const i = value[10];
 
   const co00 = e * i - f * h;
@@ -1356,15 +1356,15 @@ export const normalMatrixFromMat4Unsafe = <
   return asLinearMat4(
     asMat4<ToFrame, FromFrame, Dimensionless>([
       co00 * inverseDeterminant,
-      co10 * inverseDeterminant,
-      co20 * inverseDeterminant,
-      0,
       co01 * inverseDeterminant,
-      co11 * inverseDeterminant,
-      co21 * inverseDeterminant,
-      0,
       co02 * inverseDeterminant,
+      0,
+      co10 * inverseDeterminant,
+      co11 * inverseDeterminant,
       co12 * inverseDeterminant,
+      0,
+      co20 * inverseDeterminant,
+      co21 * inverseDeterminant,
       co22 * inverseDeterminant,
       0,
       0,
@@ -1392,13 +1392,13 @@ export const normalMatrixFromMat4 = <
   value: Mat4<ToFrame, FromFrame, TranslationUnit>,
 ): LinearMat4<ToFrame, FromFrame> => {
   const a = value[0];
-  const b = value[1];
-  const c = value[2];
-  const d = value[4];
+  const b = value[4];
+  const c = value[8];
+  const d = value[1];
   const e = value[5];
-  const f = value[6];
-  const g = value[8];
-  const h = value[9];
+  const f = value[9];
+  const g = value[2];
+  const h = value[6];
   const i = value[10];
 
   const co00 = e * i - f * h;
@@ -1463,19 +1463,19 @@ export function transformPoint3<
   const z = point[2];
   const transformedX =
     matrix[0] * x
-    + matrix[1] * y
-    + matrix[2] * z
-    + matrix[3];
+    + matrix[4] * y
+    + matrix[8] * z
+    + matrix[12];
   const transformedY =
-    matrix[4] * x
+    matrix[1] * x
     + matrix[5] * y
-    + matrix[6] * z
-    + matrix[7];
+    + matrix[9] * z
+    + matrix[13];
   const transformedZ =
-    matrix[8] * x
-    + matrix[9] * y
+    matrix[2] * x
+    + matrix[6] * y
     + matrix[10] * z
-    + matrix[11];
+    + matrix[14];
 
   return asPoint3<Unit, ToFrame>(
     asQuantity<Unit>(transformedX),
@@ -1533,15 +1533,15 @@ export function transformDirection3<
   const z = direction[2];
   const transformedX =
     matrix[0] * x
-    + matrix[1] * y
-    + matrix[2] * z;
+    + matrix[4] * y
+    + matrix[8] * z;
   const transformedY =
-    matrix[4] * x
+    matrix[1] * x
     + matrix[5] * y
-    + matrix[6] * z;
+    + matrix[9] * z;
   const transformedZ =
-    matrix[8] * x
-    + matrix[9] * y
+    matrix[2] * x
+    + matrix[6] * y
     + matrix[10] * z;
 
   return asDelta3<Unit, ToFrame>(

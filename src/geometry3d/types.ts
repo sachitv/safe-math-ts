@@ -100,10 +100,10 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
  * Affine 4x4 transform in `<ToFrame, FromFrame>` order.
  *
  * `TranslationUnit` describes the translation component unit.
- * Storage layout is row-major:
- * `[m00,m01,m02,m03, m10,m11,m12,m13, m20,m21,m22,m23, m30,m31,m32,m33]`.
+ * Storage layout is column-major:
+ * `[m00,m10,m20,m30, m01,m11,m21,m31, m02,m12,m22,m32, m03,m13,m23,m33]`.
  * The transform APIs multiply points/directions as column vectors on the right,
- * so `m03/m13/m23` are the translation slots.
+ * so `m03/m13/m23` live at indices 12/13/14.
  */
 export type Mat4<
   ToFrame extends string,
@@ -151,7 +151,7 @@ export type LinearMat4<ToFrame extends string, FromFrame extends string> =
 /**
  * Perspective 4x4 projection matrix in `<ToFrame, FromFrame>` order.
  *
- * Uses the same row-major storage layout as `Mat4`.
+ * Uses the same column-major storage layout as `Mat4`.
  */
 export type ProjectionMat4<
   ToFrame extends string,
