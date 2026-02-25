@@ -8,10 +8,10 @@ import {
   unit,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assert,
   assertAlmostEquals,
   assertThrows,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: projection edge behavior at near, far, behind-camera, and w=0', () => {
@@ -67,10 +67,13 @@ Deno.test('example: projection edge behavior at near, far, behind-camera, and w=
     'Perspective divide is undefined for w = 0',
   );
 
-  const point_wzero_ndc_unsafe = projectPoint3Unsafe(pose_ndc_view, point_wzero_view);
+  const point_wzero_ndc_unsafe = projectPoint3Unsafe(
+    pose_ndc_view,
+    point_wzero_view,
+  );
   assert(
-    !Number.isFinite(point_wzero_ndc_unsafe[0])
-      || !Number.isFinite(point_wzero_ndc_unsafe[1])
-      || !Number.isFinite(point_wzero_ndc_unsafe[2]),
+    !Number.isFinite(point_wzero_ndc_unsafe[0]) ||
+      !Number.isFinite(point_wzero_ndc_unsafe[1]) ||
+      !Number.isFinite(point_wzero_ndc_unsafe[2]),
   );
 });

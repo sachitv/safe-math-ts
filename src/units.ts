@@ -16,6 +16,8 @@ type UnitMap = {
   readonly [Token: string]: UnitExponent;
 };
 
+type EmptyUnitMap = Record<never, UnitExponent>;
+
 /**
  * Internal normalized unit representation used only at the type level.
  *
@@ -23,7 +25,7 @@ type UnitMap = {
  * - `m/s^2` => `{ factors: { m: { num: [..1], den: [] }, s: { num: [], den: [..2] } } }`
  * - `none` => `{ factors: {} }`
  */
-type UnitParts<Factors extends UnitMap = {}> = {
+type UnitParts<Factors extends UnitMap = EmptyUnitMap> = {
   readonly factors: Factors;
   readonly [unitExprBrand]: Extract<keyof Factors, string>;
 };
@@ -63,14 +65,15 @@ type ExponentFor<
   : ZeroExponent;
 
 type IsZeroExponent<Exponent extends UnitExponent> = Exponent['num'] extends
-  readonly []
-  ? Exponent['den'] extends readonly [] ? true : false
+  readonly [] ? Exponent['den'] extends readonly [] ? true : false
   : false;
 
 type NormalizeMap<Factors extends UnitMap> = {
-  readonly [Token in keyof Factors as Token extends string
-    ? IsZeroExponent<Factors[Token]> extends true ? never : Token
-    : never]: Factors[Token];
+  readonly [
+    Token in keyof Factors as Token extends string
+      ? IsZeroExponent<Factors[Token]> extends true ? never : Token
+      : never
+  ]: Factors[Token];
 };
 
 /** Normalizes a full `UnitExpr` object. */
@@ -112,19 +115,24 @@ type RepeatCount<
  */
 type ParseFactor<Factor extends string> = string extends Factor ? UnknownUnit
   : Factor extends '' ? UnknownUnit
-  : Factor extends 'none' ? UnitParts<{}>
+  : Factor extends 'none' ? UnitParts<EmptyUnitMap>
   : Factor extends `${infer Base}^${infer ExponentText}`
     ? Base extends '' ? UnknownUnit
-    : ParseNat<ExponentText> extends infer Exponent extends number
-      ? UnitParts<{
-        readonly [Token in Base]: UnitExponent<RepeatCount<Exponent>, []>;
-      }>
-    : UnitParts<{
+    : ParseNat<ExponentText> extends infer Exponent extends number ? UnitParts<
+        {
+          readonly [Token in Base]: UnitExponent<RepeatCount<Exponent>, []>;
+        }
+      >
+    : UnitParts<
+      {
+        readonly [Token in Factor]: UnitExponent<[unknown], []>;
+      }
+    >
+  : UnitParts<
+    {
       readonly [Token in Factor]: UnitExponent<[unknown], []>;
-    }>
-  : UnitParts<{
-    readonly [Token in Factor]: UnitExponent<[unknown], []>;
-  }>;
+    }
+  >;
 
 /**
  * Splits an expression into `[term, operator, rest]`.
@@ -146,9 +154,14 @@ export type MulUnit<LeftUnit extends UnitExpr, RightUnit extends UnitExpr> =
   IsUnknownMap<LeftUnit['factors']> extends true ? UnknownUnit
     : IsUnknownMap<RightUnit['factors']> extends true ? UnknownUnit
     : UnitParts<
-      NormalizeMap<{
-        readonly [Token in keyof LeftUnit['factors'] | keyof RightUnit['factors']
-          as Token extends string ? Token : never]: CancelCounts<
+      NormalizeMap<
+        {
+          readonly [
+            Token in
+              | keyof LeftUnit['factors']
+              | keyof RightUnit['factors'] as Token extends string ? Token
+                : never
+          ]: CancelCounts<
             [
               ...ExponentFor<LeftUnit['factors'], Token & string>['num'],
               ...ExponentFor<RightUnit['factors'], Token & string>['num'],
@@ -162,7 +175,8 @@ export type MulUnit<LeftUnit extends UnitExpr, RightUnit extends UnitExpr> =
             infer Denominator extends Count,
           ] ? UnitExponent<Numerator, Denominator>
             : never;
-      }>
+        }
+      >
     >;
 
 /** Type-level unit division helper. */
@@ -170,9 +184,14 @@ export type DivUnit<LeftUnit extends UnitExpr, RightUnit extends UnitExpr> =
   IsUnknownMap<LeftUnit['factors']> extends true ? UnknownUnit
     : IsUnknownMap<RightUnit['factors']> extends true ? UnknownUnit
     : UnitParts<
-      NormalizeMap<{
-        readonly [Token in keyof LeftUnit['factors'] | keyof RightUnit['factors']
-          as Token extends string ? Token : never]: CancelCounts<
+      NormalizeMap<
+        {
+          readonly [
+            Token in
+              | keyof LeftUnit['factors']
+              | keyof RightUnit['factors'] as Token extends string ? Token
+                : never
+          ]: CancelCounts<
             [
               ...ExponentFor<LeftUnit['factors'], Token & string>['num'],
               ...ExponentFor<RightUnit['factors'], Token & string>['den'],
@@ -186,7 +205,8 @@ export type DivUnit<LeftUnit extends UnitExpr, RightUnit extends UnitExpr> =
             infer Denominator extends Count,
           ] ? UnitExponent<Numerator, Denominator>
             : never;
-      }>
+        }
+      >
     >;
 
 type HalfCount<
@@ -203,7 +223,8 @@ type HalfFactor<Factor extends UnitExponent> = UnitExponent<
 >;
 
 type HasInvalidHalf<Factors extends UnitMap> = true extends {
-  [Token in keyof Factors]: HalfCount<Factors[Token]['num']> extends never ? true
+  [Token in keyof Factors]: HalfCount<Factors[Token]['num']> extends never
+    ? true
     : HalfCount<Factors[Token]['den']> extends never ? true
     : false;
 }[keyof Factors] ? true
@@ -214,11 +235,15 @@ export type SqrtUnit<Unit extends UnitExpr> = NormalizeUnit<Unit> extends
   infer Normalized extends UnitExpr
   ? IsUnknownMap<Normalized['factors']> extends true ? never
   : HasInvalidHalf<Normalized['factors']> extends true ? never
-  : UnitParts<NormalizeMap<{
-    readonly [Token in keyof Normalized['factors']]: HalfFactor<
-      Normalized['factors'][Token]
-    >;
-  }>>
+  : UnitParts<
+    NormalizeMap<
+      {
+        readonly [Token in keyof Normalized['factors']]: HalfFactor<
+          Normalized['factors'][Token]
+        >;
+      }
+    >
+  >
   : never;
 
 /**

@@ -11,10 +11,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import {
-  GEOM_EPS,
-  assertVec3AlmostEquals,
-} from '../tests/assert.test.ts';
+import { assertVec3AlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
 
 Deno.test('example: recover from normal-matrix failure with stable fallback', () => {
   const frame_world = frame('world');

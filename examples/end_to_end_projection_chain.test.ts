@@ -13,9 +13,9 @@ import {
   unit,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assertInRange,
   assertVec3AlmostEquals,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: world to vehicle to camera to view to NDC chain', () => {
@@ -63,7 +63,10 @@ Deno.test('example: world to vehicle to camera to view to NDC chain', () => {
     ),
   );
 
-  const pose_world_camera = composeMat4(pose_world_vehicle, pose_vehicle_camera);
+  const pose_world_camera = composeMat4(
+    pose_world_vehicle,
+    pose_vehicle_camera,
+  );
   const pose_camera_world = invertRigidMat4(pose_world_camera);
   const pose_view_world = composeMat4(pose_view_camera, pose_camera_world);
 
@@ -73,8 +76,14 @@ Deno.test('example: world to vehicle to camera to view to NDC chain', () => {
     quantity(meter, 0.2),
     quantity(meter, -5),
   );
-  const point_feature_world = transformPoint3(pose_world_camera, point_feature_camera);
-  const point_feature_view = transformPoint3(pose_view_world, point_feature_world);
+  const point_feature_world = transformPoint3(
+    pose_world_camera,
+    point_feature_camera,
+  );
+  const point_feature_view = transformPoint3(
+    pose_view_world,
+    point_feature_world,
+  );
   assertVec3AlmostEquals(point_feature_view, [0.5, 0.2, -5], GEOM_EPS);
 
   const pose_ndc_view = mat4Perspective(

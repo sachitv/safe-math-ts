@@ -9,7 +9,7 @@ import {
   rotateVec3ByQuat,
   unit,
 } from '../mod.ts';
-import { GEOM_EPS, assert, assertAlmostEquals } from '../tests/assert.test.ts';
+import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
 
 Deno.test('example: quatNlerp versus quatSlerp interpolation behavior', () => {
   const frame_world = frame('world');
@@ -43,8 +43,14 @@ Deno.test('example: quatNlerp versus quatSlerp interpolation behavior', () => {
     quantity(meter, 0),
   );
 
-  const delta_nlerp_world = rotateVec3ByQuat(quat_nlerp_world_body, delta_axisx_body);
-  const delta_slerp_world = rotateVec3ByQuat(quat_slerp_world_body, delta_axisx_body);
+  const delta_nlerp_world = rotateVec3ByQuat(
+    quat_nlerp_world_body,
+    delta_axisx_body,
+  );
+  const delta_slerp_world = rotateVec3ByQuat(
+    quat_slerp_world_body,
+    delta_axisx_body,
+  );
 
   const angle_nlerp = angleBetweenVec3(delta_axisx_world, delta_nlerp_world);
   const angle_slerp = angleBetweenVec3(delta_axisx_world, delta_slerp_world);

@@ -32,13 +32,14 @@ Deno.test('example: safe APIs throw on degenerate camera and vector inputs', () 
   );
 
   assertThrows(
-    () => mat4LookAt(
-      frame_view,
-      frame_world,
-      point_eye_world,
-      point_eye_world,
-      dir_up_world,
-    ),
+    () =>
+      mat4LookAt(
+        frame_view,
+        frame_world,
+        point_eye_world,
+        point_eye_world,
+        dir_up_world,
+      ),
     Error,
     'LookAt requires eye and target to be distinct',
   );

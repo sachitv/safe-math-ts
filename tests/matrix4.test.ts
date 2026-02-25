@@ -169,7 +169,10 @@ Deno.test('rotation matrix from quaternion rotates vectors', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_rotated_world = transformDirection3(pose_rot_world, delta_x_world);
+  const delta_rotated_world = transformDirection3(
+    pose_rot_world,
+    delta_x_world,
+  );
 
   assertAlmostEquals(delta_rotated_world[0], 0, 1e-12);
   assertAlmostEquals(delta_rotated_world[1], 1, 1e-12);
@@ -362,12 +365,15 @@ Deno.test('lookAt and perspective projection', () => {
 
   assertThrows(
     () =>
-      projectPoint3(pose_ndc_view, point3(
-        frame_view,
-        quantity(meter, 0),
-        quantity(meter, 0),
-        quantity(meter, 0),
-      )),
+      projectPoint3(
+        pose_ndc_view,
+        point3(
+          frame_view,
+          quantity(meter, 0),
+          quantity(meter, 0),
+          quantity(meter, 0),
+        ),
+      ),
     Error,
     'Perspective divide is undefined for w = 0',
   );
@@ -505,7 +511,10 @@ Deno.test('normal matrix from non-uniform scale', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_normalized_world = transformDirection3(pose_normal_world, delta_x_world);
+  const delta_normalized_world = transformDirection3(
+    pose_normal_world,
+    delta_x_world,
+  );
   assertAlmostEquals(delta_normalized_world[0], 0.5, 1e-12);
   assertAlmostEquals(delta_normalized_world[1], 0, 1e-12);
   assertAlmostEquals(delta_normalized_world[2], 0, 1e-12);
@@ -612,7 +621,10 @@ Deno.test('unsafe matrix helpers skip validation checks', () => {
   );
   assert(!Number.isFinite(pose_perspective_invalid[0]));
 
-  const point_projected = projectPoint3Unsafe(pose_perspective_invalid, point_origin_world);
+  const point_projected = projectPoint3Unsafe(
+    pose_perspective_invalid,
+    point_origin_world,
+  );
   assert(
     Number.isNaN(point_projected[0]) || !Number.isFinite(point_projected[0]),
   );

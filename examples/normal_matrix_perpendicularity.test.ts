@@ -13,7 +13,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import { GEOM_EPS, assertAlmostEquals } from '../tests/assert.test.ts';
+import { assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
 
 Deno.test('example: normal matrix keeps transformed normal perpendicular', () => {
   const frame_world = frame('world');
@@ -54,9 +54,17 @@ Deno.test('example: normal matrix keeps transformed normal perpendicular', () =>
     quantity(meter, 0),
   );
 
-  const normal_object = normalizeVec3(crossVec3(tangent_a_object, tangent_b_object));
-  const tangent_a_world = transformDirection3(pose_world_object, tangent_a_object);
-  const tangent_b_world = transformDirection3(pose_world_object, tangent_b_object);
+  const normal_object = normalizeVec3(
+    crossVec3(tangent_a_object, tangent_b_object),
+  );
+  const tangent_a_world = transformDirection3(
+    pose_world_object,
+    tangent_a_object,
+  );
+  const tangent_b_world = transformDirection3(
+    pose_world_object,
+    tangent_b_object,
+  );
   const normal_world = normalizeVec3(
     transformDirection3(normalMatrixFromMat4(pose_world_object), normal_object),
   );

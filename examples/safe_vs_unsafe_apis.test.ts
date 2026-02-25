@@ -9,10 +9,10 @@ import {
   unit,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assert,
   assertThrows,
   assertVec3AlmostEquals,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: safe and unsafe API behavior on validated and degenerate inputs', () => {
@@ -42,12 +42,19 @@ Deno.test('example: safe and unsafe API behavior on validated and degenerate inp
   const dir_unsafe_world = normalizeVec3Unsafe(delta_input_world);
   assertVec3AlmostEquals(dir_safe_world, dir_unsafe_world, GEOM_EPS);
 
-  const delta_proj_safe_world = projectVec3(delta_input_world, delta_axisy_world);
+  const delta_proj_safe_world = projectVec3(
+    delta_input_world,
+    delta_axisy_world,
+  );
   const delta_proj_unsafe_world = projectVec3Unsafe(
     delta_input_world,
     delta_axisy_world,
   );
-  assertVec3AlmostEquals(delta_proj_safe_world, delta_proj_unsafe_world, GEOM_EPS);
+  assertVec3AlmostEquals(
+    delta_proj_safe_world,
+    delta_proj_unsafe_world,
+    GEOM_EPS,
+  );
 
   assertThrows(
     () => normalizeVec3(delta_zero_world),
@@ -61,15 +68,18 @@ Deno.test('example: safe and unsafe API behavior on validated and degenerate inp
   );
 
   const dir_from_zero_unsafe = normalizeVec3Unsafe(delta_zero_world);
-  const delta_proj_zero_unsafe = projectVec3Unsafe(delta_input_world, delta_zero_world);
-  assert(
-    !Number.isFinite(dir_from_zero_unsafe[0])
-      || !Number.isFinite(dir_from_zero_unsafe[1])
-      || !Number.isFinite(dir_from_zero_unsafe[2]),
+  const delta_proj_zero_unsafe = projectVec3Unsafe(
+    delta_input_world,
+    delta_zero_world,
   );
   assert(
-    !Number.isFinite(delta_proj_zero_unsafe[0])
-      || !Number.isFinite(delta_proj_zero_unsafe[1])
-      || !Number.isFinite(delta_proj_zero_unsafe[2]),
+    !Number.isFinite(dir_from_zero_unsafe[0]) ||
+      !Number.isFinite(dir_from_zero_unsafe[1]) ||
+      !Number.isFinite(dir_from_zero_unsafe[2]),
+  );
+  assert(
+    !Number.isFinite(delta_proj_zero_unsafe[0]) ||
+      !Number.isFinite(delta_proj_zero_unsafe[1]) ||
+      !Number.isFinite(delta_proj_zero_unsafe[2]),
   );
 });

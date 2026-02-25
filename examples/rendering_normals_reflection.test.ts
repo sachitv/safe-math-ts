@@ -16,7 +16,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import { GEOM_EPS, assert, assertAlmostEquals } from '../tests/assert.test.ts';
+import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
 
 Deno.test('example: transform normals and reflect an incoming direction', () => {
   const frame_world = frame('world');
@@ -61,7 +61,10 @@ Deno.test('example: transform normals and reflect an incoming direction', () => 
     quantity(dimensionlessUnit, 0),
     quantity(dimensionlessUnit, 1),
   );
-  const delta_normal_world = transformDirection3(normalMatrixFromMat4(pose_world_object), dir_normal_object);
+  const delta_normal_world = transformDirection3(
+    normalMatrixFromMat4(pose_world_object),
+    dir_normal_object,
+  );
   const dir_normal_world = normalizeVec3(delta_normal_world);
 
   const delta_incoming_world = delta3(

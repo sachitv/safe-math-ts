@@ -13,10 +13,10 @@ import {
   unit,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assert,
   assertAlmostEquals,
   assertMat4AlmostEquals,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
@@ -45,7 +45,10 @@ Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_forward_world = rotateVec3ByQuat(quat_mid_world_body, delta_forward_body);
+  const delta_forward_world = rotateVec3ByQuat(
+    quat_mid_world_body,
+    delta_forward_body,
+  );
   assertAlmostEquals(delta_forward_world[0], Math.SQRT1_2, GEOM_EPS);
   assertAlmostEquals(delta_forward_world[1], Math.SQRT1_2, GEOM_EPS);
 
@@ -90,7 +93,9 @@ Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
     quat_mid_world_body,
     dir_scale_body,
   );
-  assert(Math.abs(pose_shifted_world_body[12] - pose_world_body[12]) > GEOM_EPS);
+  assert(
+    Math.abs(pose_shifted_world_body[12] - pose_world_body[12]) > GEOM_EPS,
+  );
 
   const point_body = point3(
     frame_body,

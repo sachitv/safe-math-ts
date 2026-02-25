@@ -11,9 +11,9 @@ import {
   valueOf,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assertAlmostEquals,
   assertSameUnitType,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: cookbook constant-acceleration update loop', () => {

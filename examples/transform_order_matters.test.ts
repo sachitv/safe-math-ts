@@ -12,7 +12,7 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { GEOM_EPS, assertVec3AlmostEquals } from '../tests/assert.test.ts';
+import { assertVec3AlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
 
 Deno.test('example: compose order changes transform result', () => {
   const frame_world = frame('world');
@@ -60,8 +60,14 @@ Deno.test('example: compose order changes transform result', () => {
     pose_rotate_world,
   );
 
-  const point_a_world = transformPoint3(pose_translate_then_rotate, point_world);
-  const point_b_world = transformPoint3(pose_rotate_then_translate, point_world);
+  const point_a_world = transformPoint3(
+    pose_translate_then_rotate,
+    point_world,
+  );
+  const point_b_world = transformPoint3(
+    pose_rotate_then_translate,
+    point_world,
+  );
   const expected_point_a_world = [0, 3, 0] as const;
   const expected_point_b_world = [2, 1, 0] as const;
 

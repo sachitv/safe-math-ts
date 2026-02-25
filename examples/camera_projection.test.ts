@@ -11,10 +11,10 @@ import {
   unit,
 } from '../mod.ts';
 import {
-  GEOM_EPS,
   assert,
   assertAlmostEquals,
   assertInRange,
+  GEOM_EPS,
 } from '../tests/assert.test.ts';
 
 Deno.test('example: world point to NDC via lookAt and perspective projection', () => {

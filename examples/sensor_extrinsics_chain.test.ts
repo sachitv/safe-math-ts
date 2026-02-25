@@ -10,7 +10,11 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { GEOM_EPS, assertAlmostEquals, assertVec3AlmostEquals } from '../tests/assert.test.ts';
+import {
+  assertAlmostEquals,
+  assertVec3AlmostEquals,
+  GEOM_EPS,
+} from '../tests/assert.test.ts';
 
 Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   const frame_world = frame('world');
@@ -61,7 +65,10 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   );
 
   const pose_world_lidar = composeMat4(pose_world_vehicle, pose_vehicle_lidar);
-  const pose_world_camera = composeMat4(pose_world_vehicle, pose_vehicle_camera);
+  const pose_world_camera = composeMat4(
+    pose_world_vehicle,
+    pose_vehicle_camera,
+  );
 
   const point_hit_lidar = point3(
     frame_lidar,
@@ -97,10 +104,26 @@ Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
     point_hit_world_from_camera,
   );
 
-  assertAlmostEquals(point_hit_lidar_roundtrip[0], point_hit_lidar[0], GEOM_EPS);
-  assertAlmostEquals(point_hit_lidar_roundtrip[1], point_hit_lidar[1], GEOM_EPS);
-  assertAlmostEquals(point_hit_lidar_roundtrip[2], point_hit_lidar[2], GEOM_EPS);
-  assertVec3AlmostEquals(point_hit_camera_roundtrip, point_hit_camera, GEOM_EPS);
+  assertAlmostEquals(
+    point_hit_lidar_roundtrip[0],
+    point_hit_lidar[0],
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    point_hit_lidar_roundtrip[1],
+    point_hit_lidar[1],
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    point_hit_lidar_roundtrip[2],
+    point_hit_lidar[2],
+    GEOM_EPS,
+  );
+  assertVec3AlmostEquals(
+    point_hit_camera_roundtrip,
+    point_hit_camera,
+    GEOM_EPS,
+  );
 
   assertAlmostEquals(point_hit_world[2], quantity(meter, 1), GEOM_EPS);
 });

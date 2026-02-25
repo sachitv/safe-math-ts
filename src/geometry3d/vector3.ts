@@ -468,15 +468,12 @@ export function lerpVec3<Unit extends UnitExpr, Frame extends string>(
   t: number,
 ): Delta3<Unit, Frame> | Point3<Unit, Frame> {
   const inverseT = 1 - t;
-  const x =
-    start[0] * inverseT
-    + end[0] * t;
-  const y =
-    start[1] * inverseT
-    + end[1] * t;
-  const z =
-    start[2] * inverseT
-    + end[2] * t;
+  const x = start[0] * inverseT +
+    end[0] * t;
+  const y = start[1] * inverseT +
+    end[1] * t;
+  const z = start[2] * inverseT +
+    end[2] * t;
 
   return [
     asQuantity<Unit>(x),
@@ -502,14 +499,12 @@ export const projectVec3Unsafe = <
   value: Delta3<ValueUnit, Frame>,
   onto: Delta3<OntoUnit, NoInfer<Frame>>,
 ): Delta3<ValueUnit, Frame> => {
-  const ontoLengthSquared =
-    onto[0] * onto[0]
-    + onto[1] * onto[1]
-    + onto[2] * onto[2];
-  const dotValueOnto =
-    value[0] * onto[0]
-    + value[1] * onto[1]
-    + value[2] * onto[2];
+  const ontoLengthSquared = onto[0] * onto[0] +
+    onto[1] * onto[1] +
+    onto[2] * onto[2];
+  const dotValueOnto = value[0] * onto[0] +
+    value[1] * onto[1] +
+    value[2] * onto[2];
   const scalar = dotValueOnto / ontoLengthSquared;
 
   return asDelta3<ValueUnit, Frame>(
@@ -535,10 +530,9 @@ export const projectVec3 = <
   value: Delta3<ValueUnit, Frame>,
   onto: Delta3<OntoUnit, NoInfer<Frame>>,
 ): Delta3<ValueUnit, Frame> => {
-  const ontoLengthSquared =
-    onto[0] * onto[0]
-    + onto[1] * onto[1]
-    + onto[2] * onto[2];
+  const ontoLengthSquared = onto[0] * onto[0] +
+    onto[1] * onto[1] +
+    onto[2] * onto[2];
   if (ontoLengthSquared <= NEAR_ZERO * NEAR_ZERO) {
     throw new Error('Cannot project onto a zero-length vector');
   }
@@ -560,10 +554,9 @@ export const reflectVec3Unsafe = <Unit extends UnitExpr, Frame extends string>(
   normal: Dir3<NoInfer<Frame>>,
 ): Delta3<Unit, Frame> => {
   const dir_normalized = normalizeVec3Unsafe(normal);
-  const dotIncidentNormal =
-    incident[0] * dir_normalized[0]
-    + incident[1] * dir_normalized[1]
-    + incident[2] * dir_normalized[2];
+  const dotIncidentNormal = incident[0] * dir_normalized[0] +
+    incident[1] * dir_normalized[1] +
+    incident[2] * dir_normalized[2];
   const scale = 2 * dotIncidentNormal;
 
   return asDelta3<Unit, Frame>(
@@ -608,10 +601,9 @@ export const angleBetweenVec3Unsafe = <
 ): number => {
   const leftLength = Math.hypot(left[0], left[1], left[2]);
   const rightLength = Math.hypot(right[0], right[1], right[2]);
-  const dotLeftRight =
-    left[0] * right[0]
-    + left[1] * right[1]
-    + left[2] * right[2];
+  const dotLeftRight = left[0] * right[0] +
+    left[1] * right[1] +
+    left[2] * right[2];
   const lengthProduct = leftLength * rightLength;
   const cosine = dotLeftRight / lengthProduct;
 

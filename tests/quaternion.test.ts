@@ -173,7 +173,10 @@ Deno.test('quaternion euler and interpolation helpers', () => {
     quantity(meter, 0),
     quantity(meter, 0),
   );
-  const delta_rotated_world = rotateVec3ByQuat(quat_z90_world_world, delta_x_world);
+  const delta_rotated_world = rotateVec3ByQuat(
+    quat_z90_world_world,
+    delta_x_world,
+  );
   assertAlmostEquals(delta_rotated_world[0], 0, 1e-12);
   assertAlmostEquals(delta_rotated_world[1], 1, 1e-12);
   assertAlmostEquals(delta_rotated_world[2], 0, 1e-12);
@@ -194,8 +197,14 @@ Deno.test('quaternion euler and interpolation helpers', () => {
     0.5,
   );
 
-  const delta_nlerp_world = rotateVec3ByQuat(quat_nlerp_world_world, delta_x_world);
-  const delta_slerp_world = rotateVec3ByQuat(quat_slerp_world_world, delta_x_world);
+  const delta_nlerp_world = rotateVec3ByQuat(
+    quat_nlerp_world_world,
+    delta_x_world,
+  );
+  const delta_slerp_world = rotateVec3ByQuat(
+    quat_slerp_world_world,
+    delta_x_world,
+  );
   assertAlmostEquals(delta_nlerp_world[0], 0, 1e-12);
   assertAlmostEquals(delta_nlerp_world[1], 1, 1e-12);
   assertAlmostEquals(delta_slerp_world[0], 0, 1e-12);
@@ -273,7 +282,10 @@ Deno.test('unsafe quaternion helpers skip validation checks', () => {
   const quat_inverse_world_world = quatInverseUnsafe(quat_zero_world_world);
   assert(Number.isNaN(quat_inverse_world_world[3]));
 
-  const delta_rotated_world = rotateVec3ByQuatUnsafe(quat_zero_world_world, delta_x_world);
+  const delta_rotated_world = rotateVec3ByQuatUnsafe(
+    quat_zero_world_world,
+    delta_x_world,
+  );
   assert(Number.isNaN(delta_rotated_world[0]));
 
   const quat_axis_world_world = quatFromAxisAngleUnsafe(

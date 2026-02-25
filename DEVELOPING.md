@@ -20,14 +20,10 @@ deno bench --no-check benchmarks
 
 ## Project Structure
 
-- `src/units.ts`
-  Core unit-safe scalar math and unit type machinery.
-- `src/geometry3d/`
-  Frame-safe vector/quaternion/matrix APIs.
-- `tests/`
-  Unit, runtime, and compile-time type safety checks.
-- `examples/`
-  Usage scenarios validated as tests.
+- `src/units.ts` Core unit-safe scalar math and unit type machinery.
+- `src/geometry3d/` Frame-safe vector/quaternion/matrix APIs.
+- `tests/` Unit, runtime, and compile-time type safety checks.
+- `examples/` Usage scenarios validated as tests.
 
 ## Design Rules
 
