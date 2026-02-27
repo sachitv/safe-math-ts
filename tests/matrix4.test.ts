@@ -908,3 +908,81 @@ Deno.test('mat4Ortho maps corners to NDC ±1', () => {
   const point_far_ndc = projectPoint3(pose_ortho, point_far_view);
   assertAlmostEquals(point_far_ndc[2], 1, 1e-12);
 });
+
+Deno.test('mat4Ortho input validation', () => {
+  const frame_ndc = frame('ndc');
+  const frame_view = frame('view');
+  const meter = unit('m');
+
+  const left = quantity(meter, -2);
+  const right = quantity(meter, 2);
+  const bottom = quantity(meter, -3);
+  const top = quantity(meter, 3);
+  const near = quantity(meter, 1);
+  const far = quantity(meter, 10);
+
+  // right <= left
+  assertThrows(
+    () => mat4Ortho(frame_ndc, frame_view, right, left, bottom, top, near, far),
+    Error,
+    'right must be > left',
+  );
+
+  // top <= bottom
+  assertThrows(
+    () => mat4Ortho(frame_ndc, frame_view, left, right, top, bottom, near, far),
+    Error,
+    'top must be > bottom',
+  );
+
+  // near <= 0
+  assertThrows(
+    () =>
+      mat4Ortho(
+        frame_ndc,
+        frame_view,
+        left,
+        right,
+        bottom,
+        top,
+        quantity(meter, 0),
+        far,
+      ),
+    Error,
+    'near and far must satisfy 0 < near < far',
+  );
+
+  // far <= 0
+  assertThrows(
+    () =>
+      mat4Ortho(
+        frame_ndc,
+        frame_view,
+        left,
+        right,
+        bottom,
+        top,
+        near,
+        quantity(meter, -1),
+      ),
+    Error,
+    'near and far must satisfy 0 < near < far',
+  );
+
+  // near >= far
+  assertThrows(
+    () =>
+      mat4Ortho(
+        frame_ndc,
+        frame_view,
+        left,
+        right,
+        bottom,
+        top,
+        far,
+        near,
+      ),
+    Error,
+    'near and far must satisfy 0 < near < far',
+  );
+});

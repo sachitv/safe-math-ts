@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Deny all permissions at the workflow level; each job grants only what it needs.
+permissions: {}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read # checkout
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: denoland/setup-deno@v2.0.3
+        with:
+          deno-version: v2.x
+      - run: deno lint
+
+  fmt:
+    name: Format
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read # checkout
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: denoland/setup-deno@v2.0.3
+        with:
+          deno-version: v2.x
+      - run: deno fmt --check
+
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read # checkout
+      actions: write # upload-artifact
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: denoland/setup-deno@v2.0.3
+        with:
+          deno-version: v2.x
+      - name: Run tests with coverage
+        run: deno task test
+      - name: Check 100% coverage
+        run: |
+          COVERAGE=$(NO_COLOR=1 deno coverage coverage 2>&1)
+          echo "$COVERAGE"
+          if echo "$COVERAGE" | grep -E "^\| [^-]" | grep -v "File" | grep -qvE "\|\s*100\.0\s*\|\s*100\.0\s*\|"; then
+            echo "Coverage is below 100%"
+            exit 1
+          fi
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: coverage-report
+          path: coverage/
