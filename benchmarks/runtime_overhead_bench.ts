@@ -37,6 +37,7 @@ const rawComposeMat4 = (
 
 Deno.bench({
   name: 'scalar add raw (+) [baseline]',
+  group: 'scalar add',
   baseline: true,
 }, () => {
   const left = 1.25;
@@ -50,7 +51,7 @@ Deno.bench({
   consume(total);
 });
 
-Deno.bench('scalar add helper add()', () => {
+Deno.bench({ name: 'scalar add helper add()', group: 'scalar add' }, () => {
   const meters = unit('m');
   const left = quantity(meters, 1.25);
   const right = quantity(meters, 2.75);
@@ -65,6 +66,7 @@ Deno.bench('scalar add helper add()', () => {
 
 Deno.bench({
   name: 'delta3 add raw [baseline]',
+  group: 'delta3 add',
   baseline: true,
 }, () => {
   const left0 = 1.0;
@@ -85,7 +87,7 @@ Deno.bench({
   consume(total);
 });
 
-Deno.bench('delta3 add helper addVec3()', () => {
+Deno.bench({ name: 'delta3 add helper addVec3()', group: 'delta3 add' }, () => {
   const meters = unit('m');
   const world = frame('world');
   const left = delta3(
@@ -112,6 +114,7 @@ Deno.bench('delta3 add helper addVec3()', () => {
 
 Deno.bench({
   name: 'mat4 compose raw [baseline]',
+  group: 'mat4 compose',
   baseline: true,
 }, () => {
   const meters = unit('m');
@@ -140,7 +143,10 @@ Deno.bench({
   consume(total);
 });
 
-Deno.bench('mat4 compose helper composeMat4()', () => {
+Deno.bench({
+  name: 'mat4 compose helper composeMat4()',
+  group: 'mat4 compose',
+}, () => {
   const meters = unit('m');
   const world = frame('world');
   const translationA = delta3(
