@@ -48,7 +48,13 @@ jobs:
       - name: Run tests with coverage
         run: deno task test
       - name: Check 100% coverage
-        run: deno coverage coverage --threshold=100
+        run: |
+          COVERAGE=$(NO_COLOR=1 deno coverage coverage 2>&1)
+          echo "$COVERAGE"
+          if echo "$COVERAGE" | grep -E "^\| [^-]" | grep -v "File" | grep -qvE "\|\s*100\.0\s*\|\s*100\.0\s*\|"; then
+            echo "Coverage is below 100%"
+            exit 1
+          fi
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v7.0.0
