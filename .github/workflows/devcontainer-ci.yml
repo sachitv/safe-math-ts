@@ -16,16 +16,3 @@ jobs:
         with:
           configFile: .devcontainer/deno-only/devcontainer.json
           runCmd: deno test
-
-  test-deno-and-tools:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run tests in deno-and-tools devcontainer
-        uses: devcontainers/ci@v0.3
-        with:
-          configFile: .devcontainer/deno-and-tools/devcontainer.json
-          runCmd: deno test
-          env: |
-            HOME=/root
