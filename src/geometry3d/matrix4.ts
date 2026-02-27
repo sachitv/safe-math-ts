@@ -722,6 +722,126 @@ export const mat4Perspective = <
 };
 
 /**
+ * Builds a right-handed orthographic projection matrix.
+ *
+ * Maps the view volume [left,right]×[bottom,top]×[-near,-far] to NDC
+ * [-1,1]×[-1,1]×[-1,1]. The w component of transformed points is always 1,
+ * so `projectPoint3` performs a trivial divide by 1.
+ *
+ * Unsafe variant: performs no input validation.
+ * Degenerate inputs (e.g. left === right) produce a singular matrix.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param left Left clipping plane distance.
+ * @param right Right clipping plane distance.
+ * @param bottom Bottom clipping plane distance.
+ * @param top Top clipping plane distance.
+ * @param near Near clipping plane distance.
+ * @param far Far clipping plane distance.
+ * @returns Orthographic projection matrix.
+ */
+export const mat4OrthoUnsafe = <
+  ToFrame extends string,
+  FromFrame extends string,
+  DepthUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  left: Quantity<DepthUnit>,
+  right: Quantity<NoInfer<DepthUnit>>,
+  bottom: Quantity<NoInfer<DepthUnit>>,
+  top: Quantity<NoInfer<DepthUnit>>,
+  near: Quantity<NoInfer<DepthUnit>>,
+  far: Quantity<NoInfer<DepthUnit>>,
+): ProjectionMat4<ToFrame, FromFrame, DepthUnit> => {
+  void toFrameTag;
+  void fromFrameTag;
+
+  const rl = 1 / (right - left);
+  const tb = 1 / (top - bottom);
+  const rangeInverse = 1 / (near - far);
+
+  return asProjectionMat4<ToFrame, FromFrame, DepthUnit>([
+    2 * rl,
+    0,
+    0,
+    0,
+    0,
+    2 * tb,
+    0,
+    0,
+    0,
+    0,
+    2 * rangeInverse,
+    0,
+    -(right + left) * rl,
+    -(top + bottom) * tb,
+    (far + near) * rangeInverse,
+    1,
+  ]);
+};
+
+/**
+ * Builds a right-handed orthographic projection matrix.
+ *
+ * Maps the view volume [left,right]×[bottom,top]×[-near,-far] to NDC
+ * [-1,1]×[-1,1]×[-1,1]. The w component of transformed points is always 1,
+ * so `projectPoint3` performs a trivial divide by 1.
+ *
+ * Safe variant: validates that left < right, bottom < top, and 0 < near < far.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param left Left clipping plane distance.
+ * @param right Right clipping plane distance.
+ * @param bottom Bottom clipping plane distance.
+ * @param top Top clipping plane distance.
+ * @param near Near clipping plane distance.
+ * @param far Far clipping plane distance.
+ * @returns Orthographic projection matrix.
+ * @throws {Error} When the clipping volume is degenerate.
+ */
+export const mat4Ortho = <
+  ToFrame extends string,
+  FromFrame extends string,
+  DepthUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  left: Quantity<DepthUnit>,
+  right: Quantity<NoInfer<DepthUnit>>,
+  bottom: Quantity<NoInfer<DepthUnit>>,
+  top: Quantity<NoInfer<DepthUnit>>,
+  near: Quantity<NoInfer<DepthUnit>>,
+  far: Quantity<NoInfer<DepthUnit>>,
+): ProjectionMat4<ToFrame, FromFrame, DepthUnit> => {
+  void toFrameTag;
+  void fromFrameTag;
+
+  if (!(right > left)) {
+    throw new Error('right must be > left');
+  }
+  if (!(top > bottom)) {
+    throw new Error('top must be > bottom');
+  }
+  if (!(near > 0 && far > 0 && near < far)) {
+    throw new Error('near and far must satisfy 0 < near < far');
+  }
+
+  return mat4OrthoUnsafe(
+    toFrameTag,
+    fromFrameTag,
+    left,
+    right,
+    bottom,
+    top,
+    near,
+    far,
+  );
+};
+
+/**
  * Projects a point with a perspective matrix and performs perspective divide.
  *
  * Unsafe variant: performs no `w === 0` guard.
@@ -791,8 +911,8 @@ export const projectPoint3 = <
     projection[11] * point[2] +
     projection[15];
 
-  if (clipW === 0) {
-    throw new Error('Perspective divide is undefined for w = 0');
+  if (Math.abs(clipW) < 1e-10) {
+    throw new Error('Perspective divide is undefined for w ≈ 0');
   }
 
   return projectPoint3Unsafe(projection, point);
@@ -1396,7 +1516,7 @@ export const normalMatrixFromMat4 = <
   const co20 = d * h - e * g;
 
   const determinant = a * co00 + b * co10 + c * co20;
-  if (determinant === 0) {
+  if (Math.abs(determinant) < 1e-10) {
     throw new Error('Cannot build a normal matrix from a singular transform');
   }
 

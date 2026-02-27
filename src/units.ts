@@ -30,7 +30,14 @@ type UnitParts<Factors extends UnitMap = EmptyUnitMap> = {
   readonly [unitExprBrand]: Extract<keyof Factors, string>;
 };
 
-/** Fallback shape when a unit cannot be fully resolved at compile time. */
+/**
+ * Fallback shape when a unit cannot be fully resolved at compile time.
+ *
+ * If unit string parsing fails silently (e.g. malformed tokens), the result
+ * is `UnknownUnit`, which is structurally identical for all failed parses and
+ * loses type distinctiveness. Avoid passing non-literal or malformed strings
+ * to `unit()`.
+ */
 type UnknownUnit = UnitParts<UnitMap>;
 
 /** Normalized compile-time unit representation. */

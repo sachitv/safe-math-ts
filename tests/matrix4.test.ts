@@ -18,6 +18,7 @@ import {
   mat4Identity,
   mat4LookAt,
   mat4LookAtUnsafe,
+  mat4Ortho,
   mat4Perspective,
   mat4PerspectiveUnsafe,
   mat4Unsafe,
@@ -375,7 +376,7 @@ Deno.test('lookAt and perspective projection', () => {
         ),
       ),
     Error,
-    'Perspective divide is undefined for w = 0',
+    'Perspective divide is undefined for w',
   );
 
   assertThrows(
@@ -691,4 +692,219 @@ Deno.test('unsafe matrix helpers skip validation checks', () => {
     ),
   );
   assert(Number.isNaN(pose_trs_unsafe_world[0]));
+});
+
+Deno.test('mat4 column-major layout: translation is in column 3', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const delta_offset_world = delta3(
+    frame_world,
+    quantity(meter, 7),
+    quantity(meter, 8),
+    quantity(meter, 9),
+  );
+  const pose_world = mat4FromTranslation(frame_world, delta_offset_world);
+
+  // In column-major storage, column 3 occupies indices [12..15].
+  // Row 0, col 3 = index 12 (tx), row 1, col 3 = 13 (ty), etc.
+  assertEquals(pose_world[12], 7);
+  assertEquals(pose_world[13], 8);
+  assertEquals(pose_world[14], 9);
+  assertEquals(pose_world[15], 1);
+  // Column 0 (diagonal) = identity scale.
+  assertEquals(pose_world[0], 1);
+  assertEquals(pose_world[5], 1);
+  assertEquals(pose_world[10], 1);
+});
+
+Deno.test('composeMat4 associativity', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const dir_axisz_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+
+  const pose_tx_world = mat4FromTranslation(
+    frame_world,
+    delta3(
+      frame_world,
+      quantity(meter, 1),
+      quantity(meter, 0),
+      quantity(meter, 0),
+    ),
+  );
+  const pose_ty_world = mat4FromTranslation(
+    frame_world,
+    delta3(
+      frame_world,
+      quantity(meter, 0),
+      quantity(meter, 2),
+      quantity(meter, 0),
+    ),
+  );
+  const pose_rot_world = mat4FromQuaternion(
+    frame_world,
+    frame_world,
+    dimensionlessUnit,
+    quatFromAxisAngle(frame_world, dir_axisz_world, Math.PI / 4),
+  );
+
+  // (A∘B)∘C should equal A∘(B∘C)
+  const pose_left = composeMat4(
+    composeMat4(pose_tx_world, pose_ty_world),
+    pose_rot_world,
+  );
+  const pose_right = composeMat4(
+    pose_tx_world,
+    composeMat4(pose_ty_world, pose_rot_world),
+  );
+
+  for (let i = 0; i < 16; i += 1) {
+    assertAlmostEquals(pose_left[i]!, pose_right[i]!, 1e-10);
+  }
+});
+
+Deno.test('transformPoint3 vs transformDirection3 translation sensitivity', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const delta_offset_world = delta3(
+    frame_world,
+    quantity(meter, 5),
+    quantity(meter, 5),
+    quantity(meter, 5),
+  );
+  const pose_world = mat4FromTranslation(frame_world, delta_offset_world);
+
+  const point_world = point3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 1),
+    quantity(meter, 1),
+  );
+  const delta_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 1),
+    quantity(meter, 1),
+  );
+
+  // Translation affects points.
+  const point_moved_world = transformPoint3(pose_world, point_world);
+  assertAlmostEquals(point_moved_world[0], 6, 1e-12);
+  assertAlmostEquals(point_moved_world[1], 6, 1e-12);
+  assertAlmostEquals(point_moved_world[2], 6, 1e-12);
+
+  // Translation does not affect directions.
+  const delta_moved_world = transformDirection3(pose_world, delta_world);
+  assertAlmostEquals(delta_moved_world[0], 1, 1e-12);
+  assertAlmostEquals(delta_moved_world[1], 1, 1e-12);
+  assertAlmostEquals(delta_moved_world[2], 1, 1e-12);
+});
+
+Deno.test('normalMatrixFromMat4 rejects near-singular matrix', () => {
+  const frame_world = frame('world');
+
+  // det ≈ 1e-11 < 1e-10 threshold → should throw.
+  const pose_near_singular_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1,
+    1e-11,
+    1,
+  );
+  assertThrows(
+    () => normalMatrixFromMat4(pose_near_singular_world),
+    Error,
+    'Cannot build a normal matrix from a singular transform',
+  );
+});
+
+Deno.test('mat4Ortho maps corners to NDC ±1', () => {
+  const frame_ndc = frame('ndc');
+  const frame_view = frame('view');
+  const meter = unit('m');
+
+  const left = quantity(meter, -2);
+  const right = quantity(meter, 2);
+  const bottom = quantity(meter, -3);
+  const top = quantity(meter, 3);
+  const near = quantity(meter, 1);
+  const far = quantity(meter, 10);
+
+  const pose_ortho = mat4Ortho(
+    frame_ndc,
+    frame_view,
+    left,
+    right,
+    bottom,
+    top,
+    near,
+    far,
+  );
+
+  // Left edge of view volume maps to NDC x = -1.
+  const point_left_view = point3(
+    frame_view,
+    quantity(meter, -2),
+    quantity(meter, 0),
+    quantity(meter, -1),
+  );
+  const point_left_ndc = projectPoint3(pose_ortho, point_left_view);
+  assertAlmostEquals(point_left_ndc[0], -1, 1e-12);
+
+  // Right edge maps to NDC x = +1.
+  const point_right_view = point3(
+    frame_view,
+    quantity(meter, 2),
+    quantity(meter, 0),
+    quantity(meter, -1),
+  );
+  const point_right_ndc = projectPoint3(pose_ortho, point_right_view);
+  assertAlmostEquals(point_right_ndc[0], 1, 1e-12);
+
+  // Bottom edge maps to NDC y = -1.
+  const point_bottom_view = point3(
+    frame_view,
+    quantity(meter, 0),
+    quantity(meter, -3),
+    quantity(meter, -1),
+  );
+  const point_bottom_ndc = projectPoint3(pose_ortho, point_bottom_view);
+  assertAlmostEquals(point_bottom_ndc[1], -1, 1e-12);
+
+  // Top edge maps to NDC y = +1.
+  const point_top_view = point3(
+    frame_view,
+    quantity(meter, 0),
+    quantity(meter, 3),
+    quantity(meter, -1),
+  );
+  const point_top_ndc = projectPoint3(pose_ortho, point_top_view);
+  assertAlmostEquals(point_top_ndc[1], 1, 1e-12);
+
+  // Near plane (z = -near) maps to NDC z = -1.
+  const point_near_view = point3(
+    frame_view,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, -1),
+  );
+  const point_near_ndc = projectPoint3(pose_ortho, point_near_view);
+  assertAlmostEquals(point_near_ndc[2], -1, 1e-12);
+
+  // Far plane (z = -far) maps to NDC z = +1.
+  const point_far_view = point3(
+    frame_view,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, -10),
+  );
+  const point_far_ndc = projectPoint3(pose_ortho, point_far_view);
+  assertAlmostEquals(point_far_ndc[2], 1, 1e-12);
 });

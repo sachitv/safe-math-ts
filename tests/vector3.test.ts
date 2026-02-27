@@ -341,3 +341,94 @@ Deno.test('unsafe vector helpers skip validation checks', () => {
   );
   assert(Number.isNaN(delta_reflected_world[0]));
 });
+
+Deno.test('subPoint3 yields Delta3', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const point_a_world = point3(
+    frame_world,
+    quantity(meter, 5),
+    quantity(meter, 3),
+    quantity(meter, 1),
+  );
+  const point_b_world = point3(
+    frame_world,
+    quantity(meter, 2),
+    quantity(meter, 1),
+    quantity(meter, 0),
+  );
+
+  const delta_world = subPoint3(point_a_world, point_b_world);
+  assertEquals(delta_world, [3, 2, 1]);
+});
+
+Deno.test('lerpVec3 extrapolation t<0 and t>1', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const point_a_world = point3(
+    frame_world,
+    quantity(meter, 0),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const point_b_world = point3(
+    frame_world,
+    quantity(meter, 10),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+
+  const point_before_world = lerpVec3(point_a_world, point_b_world, -0.5);
+  assertAlmostEquals(point_before_world[0], -5, 1e-12);
+
+  const point_beyond_world = lerpVec3(point_a_world, point_b_world, 1.5);
+  assertAlmostEquals(point_beyond_world[0], 15, 1e-12);
+});
+
+Deno.test('crossVec3 anti-commutativity', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const delta_a_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 2),
+    quantity(meter, 3),
+  );
+  const delta_b_world = delta3(
+    frame_world,
+    quantity(meter, 4),
+    quantity(meter, 5),
+    quantity(meter, 6),
+  );
+
+  const cross_ab = crossVec3(delta_a_world, delta_b_world);
+  const cross_ba = crossVec3(delta_b_world, delta_a_world);
+  assertAlmostEquals(cross_ab[0], -cross_ba[0], 1e-12);
+  assertAlmostEquals(cross_ab[1], -cross_ba[1], 1e-12);
+  assertAlmostEquals(cross_ab[2], -cross_ba[2], 1e-12);
+});
+
+Deno.test('angleBetweenVec3 symmetry', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const delta_a_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_b_world = delta3(
+    frame_world,
+    quantity(meter, 0),
+    quantity(meter, 1),
+    quantity(meter, 1),
+  );
+
+  const angle_ab = angleBetweenVec3(delta_a_world, delta_b_world);
+  const angle_ba = angleBetweenVec3(delta_b_world, delta_a_world);
+  assertAlmostEquals(angle_ab, angle_ba, 1e-12);
+});

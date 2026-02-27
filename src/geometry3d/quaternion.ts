@@ -414,6 +414,10 @@ export const quatFromAxisAngle = <Frame extends string>(
 /**
  * Builds a frame-local quaternion from Euler angles and explicit axis order.
  *
+ * Rotations are composed in intrinsic order: the `order` string describes
+ * which axis is applied first (leftmost) through last (rightmost). For example
+ * `'ZYX'` applies Z first, then Y, then X.
+ *
  * @param frameTag Frame token.
  * @param xRadians Rotation around X axis in radians.
  * @param yRadians Rotation around Y axis in radians.
@@ -456,6 +460,10 @@ export const quatFromEulerUnsafe = <Frame extends string>(
 
 /**
  * Builds a frame-local quaternion from Euler angles and explicit axis order.
+ *
+ * Rotations are composed in intrinsic order: the `order` string describes
+ * which axis is applied first (leftmost) through last (rightmost). For example
+ * `'ZYX'` applies Z first, then Y, then X.
  *
  * @param frameTag Frame token.
  * @param xRadians Rotation around X axis in radians.
@@ -568,8 +576,7 @@ export const quatNlerp = <ToFrame extends string, FromFrame extends string>(
     start[3] * inverseT +
       endW * t,
   );
-  quatNormalize(quat_blend);
-  return quatNlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
+  return quatNormalize(quat_blend);
 };
 
 /**
@@ -680,6 +687,5 @@ export const quatSlerp = <ToFrame extends string, FromFrame extends string>(
     s0 * start[3] +
       s1 * endW,
   );
-  quatNormalize(quat_blend);
-  return quatSlerpUnsafe(start, asQuaternion(endX, endY, endZ, endW), t);
+  return quatNormalize(quat_blend);
 };

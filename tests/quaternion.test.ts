@@ -321,3 +321,101 @@ Deno.test('unsafe quaternion helpers skip validation checks', () => {
   );
   assertQuatAlmostEquals(quat_slerp_shortest_world_world, [0, 0, 0, 1]);
 });
+
+Deno.test('quatNlerp boundary values t=0 and t=1', () => {
+  const frame_world = frame('world');
+  const dir_axisz_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+
+  const quat_start_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    0,
+  );
+  const quat_end_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    Math.PI / 2,
+  );
+
+  assertQuatAlmostEquals(
+    quatNlerp(quat_start_world, quat_end_world, 0),
+    quat_start_world,
+  );
+  assertQuatAlmostEquals(
+    quatNlerp(quat_start_world, quat_end_world, 1),
+    quat_end_world,
+  );
+});
+
+Deno.test('quatSlerp boundary values t=0 and t=1', () => {
+  const frame_world = frame('world');
+  const dir_axisz_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+
+  const quat_start_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    0,
+  );
+  const quat_end_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    Math.PI / 2,
+  );
+
+  assertQuatAlmostEquals(
+    quatSlerp(quat_start_world, quat_end_world, 0),
+    quat_start_world,
+  );
+  assertQuatAlmostEquals(
+    quatSlerp(quat_start_world, quat_end_world, 1),
+    quat_end_world,
+  );
+});
+
+Deno.test('quatSlerp near-identical quaternions use nlerp fallback', () => {
+  const frame_world = frame('world');
+  const dir_axisz_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+
+  // Very small angle — dot product will exceed 0.9995, triggering nlerp path.
+  const quat_a_world = quatFromAxisAngle(frame_world, dir_axisz_world, 0);
+  const quat_b_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    0.001,
+  );
+
+  const quat_mid_world = quatSlerp(quat_a_world, quat_b_world, 0.5);
+  // Result must still be a valid unit quaternion.
+  assertAlmostEquals(quatNorm(quat_mid_world), 1, 1e-12);
+});
+
+Deno.test('quatFromEuler different orders produce distinct quaternions', () => {
+  const frame_world = frame('world');
+  const x = Math.PI / 6;
+  const y = Math.PI / 4;
+  const z = Math.PI / 3;
+
+  const quat_xyz_world = quatFromEuler(frame_world, x, y, z, 'XYZ');
+  const quat_yzx_world = quatFromEuler(frame_world, x, y, z, 'YZX');
+
+  // Different orders should produce different results for non-zero mixed angles.
+  const allEqual = quat_xyz_world.every(
+    (v, i) => Math.abs(v - quat_yzx_world[i]!) < 1e-12,
+  );
+  assert(!allEqual, 'XYZ and YZX should produce different quaternions');
+});

@@ -80,6 +80,8 @@ export {
   mat4Identity,
   mat4LookAt,
   mat4LookAtUnsafe,
+  mat4Ortho,
+  mat4OrthoUnsafe,
   mat4Perspective,
   mat4PerspectiveUnsafe,
   mat4Unsafe,

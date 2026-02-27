@@ -237,6 +237,7 @@ Geometry:
 - `projectVec3`, `projectVec3Unsafe`
 - `reflectVec3`, `reflectVec3Unsafe`
 - `angleBetweenVec3`, `angleBetweenVec3Unsafe`
+- `scaleDir3`
 
 ### Quaternion operations
 
@@ -260,6 +261,7 @@ Construction:
 - `mat4FromTRS`, `mat4FromTRSUnsafe`
 - `createTrsMat4Cache`
 - `mat4Perspective`, `mat4PerspectiveUnsafe`
+- `mat4Ortho`, `mat4OrthoUnsafe`
 - `mat4LookAt`, `mat4LookAtUnsafe`
 
 Composition and transforms:

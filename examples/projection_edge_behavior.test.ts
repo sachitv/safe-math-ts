@@ -64,7 +64,7 @@ Deno.test('example: projection edge behavior at near, far, behind-camera, and w=
   assertThrows(
     () => projectPoint3(pose_ndc_view, point_wzero_view),
     Error,
-    'Perspective divide is undefined for w = 0',
+    'Perspective divide is undefined for w',
   );
 
   const point_wzero_ndc_unsafe = projectPoint3Unsafe(
