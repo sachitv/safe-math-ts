@@ -1,0 +1,18 @@
+name: 'Devcontainer CI'
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-deno-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run tests in deno-only devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/deno-only/devcontainer.json
+          runCmd: deno test
