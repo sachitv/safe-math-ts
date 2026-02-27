@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Type of release"
+        required: true
+        default: full
+        type: choice
+        options:
+          - skip
+          - draft
+          - full
+      publish_jsr:
+        description: "Publish to JSR"
+        required: false
+        default: true
+        type: boolean
+      publish_npm:
+        description: "Publish to npm"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.7.1"
+      - name: Set release flags
+        run: |
+          if [ "${{ inputs.release_type }}" == "draft" ]; then
+            echo "is_draft=true" >> $GITHUB_ENV
+          else
+            echo "is_draft=false" >> $GITHUB_ENV
+          fi
+      - name: Get version
+        if: inputs.release_type != 'skip'
+        id: version
+        run: |
+          VERSION=$(deno task --quiet get-version)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Get previous tag
+        if: inputs.release_type != 'skip'
+        id: previoustag
+        run: |
+          tag=$(git describe --tags --abbrev=0 2>/dev/null) || tag=''
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+      - name: Generate release notes
+        if: inputs.release_type != 'skip'
+        id: release_notes
+        uses: TriPSs/conventional-changelog-action@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ steps.version.outputs.version }}
+          old-version: ${{ steps.previoustag.outputs.tag }}
+          tag-prefix: ""
+          skip-commit: true
+          skip-tag: true
+          git-push: false
+          output-file: "false"
+      - name: Check if tag exists
+        if: inputs.release_type != 'skip'
+        run: |
+          if git tag -l | grep -q "^${{ steps.version.outputs.version }}$"; then
+            echo "Tag ${{ steps.version.outputs.version }} already exists"
+            exit 1
+          fi
+      - name: Create tag
+        if: inputs.release_type != 'skip'
+        run: |
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+      - name: Create GitHub release
+        if: inputs.release_type != 'skip'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          body: ${{ steps.release_notes.outputs.clean_changelog }}
+          draft: ${{ env.is_draft == 'true' }}
+      - name: Publish to JSR
+        if: inputs.publish_jsr
+        run: deno publish
+      - name: Setup Node.js
+        if: inputs.publish_npm
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org/
+      - name: Update npm
+        if: inputs.publish_npm
+        run: npm install -g npm@latest
+      - name: Build npm package
+        if: inputs.publish_npm
+        run: deno task npm:build
+      - name: Publish to npm
+        if: inputs.publish_npm
+        run: cd npm && npm publish
