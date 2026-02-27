@@ -1,4 +1,4 @@
-name: "Devcontainer CI"
+name: 'Devcontainer CI'
 on:
   push:
     branches:
@@ -12,9 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Run tests in deno-only devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@v0.3.1900000417
         with:
-          subFolder: .devcontainer/deno-only
+          configFile: .devcontainer/deno-only/devcontainer.json
           runCmd: deno test
 
   test-deno-and-tools:
@@ -23,9 +23,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Run tests in deno-and-tools devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@v0.3.1900000417
         with:
-          subFolder: .devcontainer/deno-and-tools
+          configFile: .devcontainer/deno-and-tools/devcontainer.json
           runCmd: deno test
           env: |
             HOME=/root
