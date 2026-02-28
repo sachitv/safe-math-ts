@@ -1,4 +1,7 @@
 {
+  "name": "@sachitv/safe-math-ts",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -17,10 +20,15 @@
     "check": "deno check mod.ts",
     "test": "deno test --coverage=coverage --coverage-raw-data-only",
     "coverage": "deno coverage coverage",
-    "bench": "deno bench --no-check benchmarks"
+    "bench": "deno bench --no-check benchmarks",
+    "npm:build": "deno run -A scripts/build_npm.ts",
+    "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'"
   },
   "fmt": {
     "singleQuote": true,
     "semiColons": true
+  },
+  "imports": {
+    "@deno/dnt": "jsr:@deno/dnt@^0.42.3"
   }
 }
