@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: "2.7.1"
+          deno-version: '2.7.1'
       - run: deno lint
 
   fmt:
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: "2.7.1"
+          deno-version: '2.7.1'
       - run: deno fmt --check
 
   test:
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: "2.7.1"
+          deno-version: '2.7.1'
       - name: Run tests with coverage
         run: deno task test
       - name: Check 100% coverage

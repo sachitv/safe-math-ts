@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: "Type of release"
+        description: 'Type of release'
         required: true
         default: full
         type: choice
@@ -13,12 +13,12 @@ on:
           - draft
           - full
       publish_jsr:
-        description: "Publish to JSR"
+        description: 'Publish to JSR'
         required: false
         default: true
         type: boolean
       publish_npm:
-        description: "Publish to npm"
+        description: 'Publish to npm'
         required: false
         default: true
         type: boolean
@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 0
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: "2.7.1"
+          deno-version: '2.7.1'
       - name: Set release flags
         run: |
           if [ "${{ inputs.release_type }}" == "draft" ]; then
@@ -63,11 +63,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ steps.version.outputs.version }}
           old-version: ${{ steps.previoustag.outputs.tag }}
-          tag-prefix: ""
+          tag-prefix: ''
           skip-commit: true
           skip-tag: true
           git-push: false
-          output-file: "false"
+          output-file: 'false'
       - name: Check if tag exists
         if: inputs.release_type != 'skip'
         run: |
@@ -95,7 +95,7 @@ jobs:
         if: inputs.publish_npm
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: '22'
           registry-url: https://registry.npmjs.org/
       - name: Update npm
         if: inputs.publish_npm
