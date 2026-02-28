@@ -12,7 +12,15 @@
       "tags": [
         "recommended"
       ]
-    }
+    },
+    "exclude": [
+      "tests/compat/"
+    ]
+  },
+  "test": {
+    "exclude": [
+      "tests/compat/"
+    ]
   },
   "tasks": {
     "precommit": "deno fmt && deno lint && deno test",
@@ -22,11 +30,15 @@
     "coverage": "deno coverage coverage",
     "bench": "deno bench --no-check benchmarks",
     "npm:build": "deno run -A scripts/build_npm.ts",
-    "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'"
+    "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'",
+    "compat": "bash tests/compat/run-all.sh"
   },
   "fmt": {
     "singleQuote": true,
-    "semiColons": true
+    "semiColons": true,
+    "exclude": [
+      "tests/compat/"
+    ]
   },
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.42.3"
