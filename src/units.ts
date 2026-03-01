@@ -1,10 +1,15 @@
-declare const quantityBrand: unique symbol;
-declare const unitTagBrand: unique symbol;
-declare const unitExprBrand: unique symbol;
+/** Internal nominal brand symbol for `Quantity`. */
+export declare const quantityBrand: unique symbol;
+/** Internal nominal brand symbol for `UnitTag`. */
+export declare const unitTagBrand: unique symbol;
+/** Internal nominal brand symbol for `UnitExpr` factor maps. */
+export declare const unitExprBrand: unique symbol;
 
-type Count = readonly unknown[];
+/** Type-level tuple counter used for exponent arithmetic. */
+export type Count = readonly unknown[];
 
-type UnitExponent<
+/** Rational exponent represented as numerator/denominator tuple lengths. */
+export type UnitExponent<
   Numerator extends Count = Count,
   Denominator extends Count = Count,
 > = {
@@ -12,11 +17,13 @@ type UnitExponent<
   readonly den: readonly [...Denominator];
 };
 
-type UnitMap = {
+/** Map of unit token to its rational exponent. */
+export type UnitMap = {
   readonly [Token: string]: UnitExponent;
 };
 
-type EmptyUnitMap = Record<never, UnitExponent>;
+/** Empty unit-factor map used by `none`. */
+export type EmptyUnitMap = Record<never, UnitExponent>;
 
 /**
  * Internal normalized unit representation used only at the type level.
@@ -25,7 +32,7 @@ type EmptyUnitMap = Record<never, UnitExponent>;
  * - `m/s^2` => `{ factors: { m: { num: [..1], den: [] }, s: { num: [], den: [..2] } } }`
  * - `none` => `{ factors: {} }`
  */
-type UnitParts<Factors extends UnitMap = EmptyUnitMap> = {
+export type UnitParts<Factors extends UnitMap = EmptyUnitMap> = {
   readonly factors: Factors;
   readonly [unitExprBrand]: Extract<keyof Factors, string>;
 };
@@ -38,7 +45,7 @@ type UnitParts<Factors extends UnitMap = EmptyUnitMap> = {
  * loses type distinctiveness. Avoid passing non-literal or malformed strings
  * to `unit()`.
  */
-type UnknownUnit = UnitParts<UnitMap>;
+export type UnknownUnit = UnitParts<UnitMap>;
 
 /** Normalized compile-time unit representation. */
 export type UnitExpr = UnknownUnit;
@@ -51,12 +58,15 @@ export type NoInfer<ValueType> = [
   ValueType,
 ][ValueType extends unknown ? 0 : never];
 
-type ZeroExponent = UnitExponent<[], []>;
+/** Zero exponent helper (`x^0`). */
+export type ZeroExponent = UnitExponent<[], []>;
 
-type IsUnknownMap<Factors extends UnitMap> = string extends keyof Factors ? true
+/** Detects unresolved unit maps that lost token specificity. */
+export type IsUnknownMap<Factors extends UnitMap> = string extends keyof Factors ? true
   : false;
 
-type CancelCounts<
+/** Cancels numerator/denominator tuple counts elementwise. */
+export type CancelCounts<
   Numerator extends Count,
   Denominator extends Count,
 > = Numerator extends readonly [unknown, ...infer NumTail extends unknown[]]
@@ -65,17 +75,20 @@ type CancelCounts<
   : [Numerator, Denominator]
   : [Numerator, Denominator];
 
-type ExponentFor<
+/** Returns exponent for a token or zero when missing. */
+export type ExponentFor<
   Factors extends UnitMap,
   Token extends string,
 > = Token extends keyof Factors ? Factors[Token]
   : ZeroExponent;
 
-type IsZeroExponent<Exponent extends UnitExponent> = Exponent['num'] extends
+/** Predicate for zero exponent. */
+export type IsZeroExponent<Exponent extends UnitExponent> = Exponent['num'] extends
   readonly [] ? Exponent['den'] extends readonly [] ? true : false
   : false;
 
-type NormalizeMap<Factors extends UnitMap> = {
+/** Removes zero-exponent entries from a factor map. */
+export type NormalizeMap<Factors extends UnitMap> = {
   readonly [
     Token in keyof Factors as Token extends string
       ? IsZeroExponent<Factors[Token]> extends true ? never : Token
@@ -84,11 +97,12 @@ type NormalizeMap<Factors extends UnitMap> = {
 };
 
 /** Normalizes a full `UnitExpr` object. */
-type NormalizeUnit<Unit extends UnitExpr> =
+export type NormalizeUnit<Unit extends UnitExpr> =
   IsUnknownMap<Unit['factors']> extends true ? UnknownUnit
     : UnitParts<NormalizeMap<Unit['factors']>>;
 
-type IsNaturalNumberText<Value extends string> = Value extends '' ? false
+/** Checks whether a string literal is an unsigned integer text form. */
+export type IsNaturalNumberText<Value extends string> = Value extends '' ? false
   : Value extends `-${string}` ? false
   : Value extends `${string}.${string}` ? false
   : Value extends `${string}e${string}` | `${string}E${string}` ? false
@@ -100,7 +114,7 @@ type IsNaturalNumberText<Value extends string> = Value extends '' ? false
  * Returns `null` for negative/decimal/exponential forms so callers can
  * safely fall back to opaque token handling for invalid exponents.
  */
-type ParseNat<Value extends string> = IsNaturalNumberText<Value> extends true
+export type ParseNat<Value extends string> = IsNaturalNumberText<Value> extends true
   ? Value extends `${infer Parsed extends number}`
     ? `${Parsed}` extends Value ? Parsed
     : null
@@ -108,7 +122,7 @@ type ParseNat<Value extends string> = IsNaturalNumberText<Value> extends true
   : null;
 
 /** Builds `Count` tuple entries (`s^2` -> [unknown, unknown]). */
-type RepeatCount<
+export type RepeatCount<
   Count extends number,
   Output extends unknown[] = [],
 > = Output['length'] extends Count ? Output
@@ -120,7 +134,7 @@ type RepeatCount<
  * - `m` => m^1
  * - `s^2` => s^2
  */
-type ParseFactor<Factor extends string> = string extends Factor ? UnknownUnit
+export type ParseFactor<Factor extends string> = string extends Factor ? UnknownUnit
   : Factor extends '' ? UnknownUnit
   : Factor extends 'none' ? UnitParts<EmptyUnitMap>
   : Factor extends `${infer Base}^${infer ExponentText}`
@@ -147,7 +161,7 @@ type ParseFactor<Factor extends string> = string extends Factor ? UnknownUnit
  * Example:
  * - `m/s^2` -> ['m', '/', 's^2']
  */
-type TakeTerm<
+export type TakeTerm<
   Source extends string,
   Current extends string = '',
 > = string extends Source ? [Source, '', '']
@@ -216,7 +230,8 @@ export type DivUnit<LeftUnit extends UnitExpr, RightUnit extends UnitExpr> =
       >
     >;
 
-type HalfCount<
+/** Halves a tuple length; returns `never` for odd lengths. */
+export type HalfCount<
   Source extends Count,
   Output extends unknown[] = [],
 > = Source extends readonly [unknown, unknown, ...infer Tail extends unknown[]]
@@ -224,12 +239,14 @@ type HalfCount<
   : Source extends readonly [] ? Output
   : never;
 
-type HalfFactor<Factor extends UnitExponent> = UnitExponent<
+/** Halves both exponent numerator and denominator tuple counts. */
+export type HalfFactor<Factor extends UnitExponent> = UnitExponent<
   HalfCount<Factor['num']>,
   HalfCount<Factor['den']>
 >;
 
-type HasInvalidHalf<Factors extends UnitMap> = true extends {
+/** Detects whether any factor has an odd exponent component. */
+export type HasInvalidHalf<Factors extends UnitMap> = true extends {
   [Token in keyof Factors]: HalfCount<Factors[Token]['num']> extends never
     ? true
     : HalfCount<Factors[Token]['den']> extends never ? true
@@ -259,7 +276,7 @@ export type SqrtUnit<Unit extends UnitExpr> = NormalizeUnit<Unit> extends
  * 2. Apply pending operator to accumulated unit
  * 3. Continue until no operator remains
  */
-type ParseUnitTail<
+export type ParseUnitTail<
   Accumulated extends UnitExpr,
   Operator extends string,
   Rest extends string,
@@ -281,7 +298,7 @@ type ParseUnitTail<
   : never;
 
 /** Parses the first factor, then delegates to `ParseUnitTail`. */
-type ParseUnitExpr<Expr extends string> = TakeTerm<Expr> extends [
+export type ParseUnitExpr<Expr extends string> = TakeTerm<Expr> extends [
   infer FirstFactor extends string,
   infer FirstOperator extends string,
   infer Rest extends string,

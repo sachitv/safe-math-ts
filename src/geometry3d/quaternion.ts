@@ -1,8 +1,27 @@
 import { type NoInfer, type Quantity, type UnitExpr } from '../units.ts';
-import type { Delta3, Dir3, FrameTag, Quaternion } from './types.ts';
+import type {
+  Delta3,
+  Dir3,
+  FrameTag,
+  LinearMat4,
+  Mat4,
+  Quaternion,
+} from './types.ts';
 import { normalizeVec3, normalizeVec3Unsafe } from './vector3.ts';
 
 const NEAR_ZERO = 1e-14;
+const ROTATION_MATRIX_TOLERANCE = 1e-8;
+
+type DistinctFramePair<ToFrame extends string, FromFrame extends string> =
+  [ToFrame] extends [FromFrame]
+    ? ([FromFrame] extends [ToFrame] ? never : unknown)
+    : unknown;
+
+const assertDistinctFrames = (toFrame: string, fromFrame: string): void => {
+  if (toFrame === fromFrame) {
+    throw new Error('toFrameTag and fromFrameTag must be different');
+  }
+};
 
 /**
  * Casts a raw number into a branded quantity.
@@ -27,8 +46,24 @@ const asQuaternion = <ToFrame extends string, FromFrame extends string>(
   y: number,
   z: number,
   w: number,
-): Quaternion<ToFrame, FromFrame> =>
-  [x, y, z, w] as unknown as Quaternion<ToFrame, FromFrame>;
+): Quaternion<ToFrame, FromFrame> => {
+  const value = [x, y, z, w] as [number, number, number, number];
+  Object.defineProperties(value, {
+    x: {
+      get: () => value[0],
+    },
+    y: {
+      get: () => value[1],
+    },
+    z: {
+      get: () => value[2],
+    },
+    w: {
+      get: () => value[3],
+    },
+  });
+  return value as unknown as Quaternion<ToFrame, FromFrame>;
+};
 
 /** Axis composition order for Euler rotations. */
 export type EulerOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
@@ -48,16 +83,37 @@ export type EulerOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
  */
 export const quat = <ToFrame extends string, FromFrame extends string>(
   toFrameTag: FrameTag<ToFrame>,
-  fromFrameTag: FrameTag<FromFrame>,
+  fromFrameTag: FrameTag<FromFrame> & DistinctFramePair<ToFrame, FromFrame>,
   x: number,
   y: number,
   z: number,
   w: number,
 ): Quaternion<ToFrame, FromFrame> => {
+  assertDistinctFrames(toFrameTag, fromFrameTag);
   void toFrameTag;
   void fromFrameTag;
   return asQuaternion<ToFrame, FromFrame>(x, y, z, w);
 };
+
+/** Returns the x component of a quaternion. */
+export const quatX = <ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number => value[0];
+
+/** Returns the y component of a quaternion. */
+export const quatY = <ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number => value[1];
+
+/** Returns the z component of a quaternion. */
+export const quatZ = <ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number => value[2];
+
+/** Returns the w component of a quaternion. */
+export const quatW = <ToFrame extends string, FromFrame extends string>(
+  value: Quaternion<ToFrame, FromFrame>,
+): number => value[3];
 
 /**
  * Returns identity quaternion for a frame.
@@ -358,6 +414,232 @@ export function rotateVec3ByQuat<
     rotation,
     value as Delta3<Unit, NoInfer<FromFrame>>,
   );
+}
+
+const isNear = (a: number, b: number, tolerance: number): boolean =>
+  Math.abs(a - b) <= tolerance;
+
+const dot3 = (
+  ax: number,
+  ay: number,
+  az: number,
+  bx: number,
+  by: number,
+  bz: number,
+): number => ax * bx + ay * by + az * bz;
+
+const lengthSquared3 = (x: number, y: number, z: number): number =>
+  dot3(x, y, z, x, y, z);
+
+const det3 = (
+  m00: number,
+  m01: number,
+  m02: number,
+  m10: number,
+  m11: number,
+  m12: number,
+  m20: number,
+  m21: number,
+  m22: number,
+): number =>
+  m00 * (m11 * m22 - m12 * m21) -
+  m01 * (m10 * m22 - m12 * m20) +
+  m02 * (m10 * m21 - m11 * m20);
+
+const assertValidRotationBasis = (
+  m00: number,
+  m01: number,
+  m02: number,
+  m10: number,
+  m11: number,
+  m12: number,
+  m20: number,
+  m21: number,
+  m22: number,
+): void => {
+  const entries = [m00, m01, m02, m10, m11, m12, m20, m21, m22];
+  if (!entries.every(Number.isFinite)) {
+    throw new Error('Rotation matrix contains non-finite values');
+  }
+
+  const col0LengthSquared = lengthSquared3(m00, m10, m20);
+  const col1LengthSquared = lengthSquared3(m01, m11, m21);
+  const col2LengthSquared = lengthSquared3(m02, m12, m22);
+  const col01Dot = dot3(m00, m10, m20, m01, m11, m21);
+  const col02Dot = dot3(m00, m10, m20, m02, m12, m22);
+  const col12Dot = dot3(m01, m11, m21, m02, m12, m22);
+  const determinant = det3(
+    m00,
+    m01,
+    m02,
+    m10,
+    m11,
+    m12,
+    m20,
+    m21,
+    m22,
+  );
+
+  if (
+    !isNear(col0LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    !isNear(col1LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    !isNear(col2LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    Math.abs(col01Dot) > ROTATION_MATRIX_TOLERANCE ||
+    Math.abs(col02Dot) > ROTATION_MATRIX_TOLERANCE ||
+    Math.abs(col12Dot) > ROTATION_MATRIX_TOLERANCE ||
+    !isNear(determinant, 1, ROTATION_MATRIX_TOLERANCE)
+  ) {
+    throw new Error('Input matrix is not a valid rotation matrix');
+  }
+};
+
+/**
+ * Builds quaternion from a matrix rotation basis.
+ *
+ * Accepts either a linear matrix or the linear part of an affine matrix.
+ * Unsafe variant performs no orthonormality validation.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param matrix Rotation matrix in `<ToFrame, FromFrame>` order.
+ * @returns Quaternion in `<ToFrame, FromFrame>` order.
+ */
+export function quatFromRotationMatrixUnsafe<
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: LinearMat4<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+): Quaternion<ToFrame, FromFrame>;
+/** Overload accepting an affine matrix and using its upper-left 3x3 basis. */
+export function quatFromRotationMatrixUnsafe<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: Mat4<NoInfer<ToFrame>, NoInfer<FromFrame>, TranslationUnit>,
+): Quaternion<ToFrame, FromFrame>;
+export function quatFromRotationMatrixUnsafe<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: Mat4<NoInfer<ToFrame>, NoInfer<FromFrame>, TranslationUnit>,
+): Quaternion<ToFrame, FromFrame> {
+  void toFrameTag;
+  void fromFrameTag;
+
+  const m00 = matrix[0];
+  const m10 = matrix[1];
+  const m20 = matrix[2];
+  const m01 = matrix[4];
+  const m11 = matrix[5];
+  const m21 = matrix[6];
+  const m02 = matrix[8];
+  const m12 = matrix[9];
+  const m22 = matrix[10];
+
+  const trace = m00 + m11 + m22;
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  let w = 1;
+
+  if (trace > 0) {
+    const s = Math.sqrt(trace + 1) * 2;
+    w = 0.25 * s;
+    x = (m21 - m12) / s;
+    y = (m02 - m20) / s;
+    z = (m10 - m01) / s;
+  } else if (m00 > m11 && m00 > m22) {
+    const s = Math.sqrt(1 + m00 - m11 - m22) * 2;
+    w = (m21 - m12) / s;
+    x = 0.25 * s;
+    y = (m01 + m10) / s;
+    z = (m02 + m20) / s;
+  } else if (m11 > m22) {
+    const s = Math.sqrt(1 + m11 - m00 - m22) * 2;
+    w = (m02 - m20) / s;
+    x = (m01 + m10) / s;
+    y = 0.25 * s;
+    z = (m12 + m21) / s;
+  } else {
+    const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
+    w = (m10 - m01) / s;
+    x = (m02 + m20) / s;
+    y = (m12 + m21) / s;
+    z = 0.25 * s;
+  }
+
+  return quatNormalizeUnsafe(asQuaternion<ToFrame, FromFrame>(x, y, z, w));
+}
+
+/**
+ * Builds quaternion from a matrix rotation basis.
+ *
+ * Accepts either a linear matrix or the linear part of an affine matrix.
+ * Throws when the matrix basis is not orthonormal right-handed rotation.
+ *
+ * @param toFrameTag Destination frame token.
+ * @param fromFrameTag Source frame token.
+ * @param matrix Rotation matrix in `<ToFrame, FromFrame>` order.
+ * @returns Quaternion in `<ToFrame, FromFrame>` order.
+ * @throws {Error} When matrix is not a valid finite rotation matrix.
+ */
+export function quatFromRotationMatrix<
+  ToFrame extends string,
+  FromFrame extends string,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: LinearMat4<NoInfer<ToFrame>, NoInfer<FromFrame>>,
+): Quaternion<ToFrame, FromFrame>;
+/** Overload accepting an affine matrix and validating its upper-left 3x3 basis. */
+export function quatFromRotationMatrix<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: Mat4<NoInfer<ToFrame>, NoInfer<FromFrame>, TranslationUnit>,
+): Quaternion<ToFrame, FromFrame>;
+export function quatFromRotationMatrix<
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  toFrameTag: FrameTag<ToFrame>,
+  fromFrameTag: FrameTag<FromFrame>,
+  matrix: Mat4<NoInfer<ToFrame>, NoInfer<FromFrame>, TranslationUnit>,
+): Quaternion<ToFrame, FromFrame> {
+  const m00 = matrix[0];
+  const m10 = matrix[1];
+  const m20 = matrix[2];
+  const m01 = matrix[4];
+  const m11 = matrix[5];
+  const m21 = matrix[6];
+  const m02 = matrix[8];
+  const m12 = matrix[9];
+  const m22 = matrix[10];
+  assertValidRotationBasis(
+    m00,
+    m01,
+    m02,
+    m10,
+    m11,
+    m12,
+    m20,
+    m21,
+    m22,
+  );
+
+  return quatFromRotationMatrixUnsafe(toFrameTag, fromFrameTag, matrix);
 }
 
 /**
