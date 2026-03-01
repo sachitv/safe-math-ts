@@ -16,7 +16,8 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
-    }
+    },
+    "ghcr.io/devcontainers-extra/features/bun:1": {}
   },
   "mounts": [
     "source=${localEnv:HOME}/.config/opencode,target=/home/vscode/.config/opencode,type=bind,consistency=cached,readonly=true",
