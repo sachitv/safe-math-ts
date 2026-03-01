@@ -4,10 +4,10 @@ import {
   dimensionlessUnit,
   dir3,
   frame,
-  mat4Unsafe,
   mat4FromQuaternion,
   mat4FromRigidTransform,
   mat4FromScale,
+  mat4Unsafe,
   quantity,
   quat,
   quatConjugate,
@@ -25,12 +25,12 @@ import {
   quatNormalize,
   quatNormalizeUnsafe,
   quatNormSquared,
+  quatSlerp,
+  quatSlerpUnsafe,
   quatW,
   quatX,
   quatY,
   quatZ,
-  quatSlerp,
-  quatSlerpUnsafe,
   rotateVec3ByQuat,
   rotateVec3ByQuatUnsafe,
   unit,
@@ -510,7 +510,10 @@ Deno.test('quatFromRotationMatrix reads linear part from rigid transform matrix'
     quantity(meter, 0.9),
     quantity(meter, -0.1),
   );
-  const delta_expected_world = rotateVec3ByQuat(quat_world_body, delta_input_body);
+  const delta_expected_world = rotateVec3ByQuat(
+    quat_world_body,
+    delta_input_body,
+  );
   const delta_recovered_world = rotateVec3ByQuat(
     recovered_world_body,
     delta_input_body,

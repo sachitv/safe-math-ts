@@ -71,7 +71,11 @@ Deno.test('example: extract translation and orientation from a rigid transform',
     extracted_quat_world_body,
   );
   for (let i = 0; i < 12; i += 1) {
-    assertAlmostEquals(rot_roundtrip_world_body[i]!, pose_world_body[i]!, GEOM_EPS);
+    assertAlmostEquals(
+      rot_roundtrip_world_body[i]!,
+      pose_world_body[i]!,
+      GEOM_EPS,
+    );
   }
 });
 

@@ -237,9 +237,21 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
   );
 
   const extracted_translation_world = pose_rigid_world.translation();
-  assertAlmostEquals(extracted_translation_world[0], delta_offset_world[0], 1e-12);
-  assertAlmostEquals(extracted_translation_world[1], delta_offset_world[1], 1e-12);
-  assertAlmostEquals(extracted_translation_world[2], delta_offset_world[2], 1e-12);
+  assertAlmostEquals(
+    extracted_translation_world[0],
+    delta_offset_world[0],
+    1e-12,
+  );
+  assertAlmostEquals(
+    extracted_translation_world[1],
+    delta_offset_world[1],
+    1e-12,
+  );
+  assertAlmostEquals(
+    extracted_translation_world[2],
+    delta_offset_world[2],
+    1e-12,
+  );
 
   const extracted_quat_world = pose_rigid_world.quat();
   const pose_roundtrip_world = mat4FromQuaternion(

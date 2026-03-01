@@ -1,9 +1,4 @@
-import {
-  dimensionlessUnit,
-  frame,
-  mat4,
-  quat,
-} from '../mod.ts';
+import { dimensionlessUnit, frame, mat4, quat } from '../mod.ts';
 import type { FrameTag } from '../mod.ts';
 import { assertThrows } from '../tests/assert.ts';
 
@@ -14,10 +9,22 @@ Deno.test('example: quat and mat4 constructors reject identical to/from frames a
   // Distinct frames compile and run cleanly.
   quat(frame_world, frame_body, 0, 0, 0, 1);
   mat4(frame_world, frame_body, dimensionlessUnit, [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
   ]);
 
   // TypeScript prevents identical frames at compile time via the DistinctFramePair
@@ -35,10 +42,22 @@ Deno.test('example: quat and mat4 constructors reject identical to/from frames a
   assertThrows(
     () =>
       mat4(alias_to, alias_from, dimensionlessUnit, [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
       ]),
     Error,
     'toFrameTag and fromFrameTag must be different',

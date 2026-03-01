@@ -62,7 +62,8 @@ export type NoInfer<ValueType> = [
 export type ZeroExponent = UnitExponent<[], []>;
 
 /** Detects unresolved unit maps that lost token specificity. */
-export type IsUnknownMap<Factors extends UnitMap> = string extends keyof Factors ? true
+export type IsUnknownMap<Factors extends UnitMap> = string extends keyof Factors
+  ? true
   : false;
 
 /** Cancels numerator/denominator tuple counts elementwise. */
@@ -83,9 +84,10 @@ export type ExponentFor<
   : ZeroExponent;
 
 /** Predicate for zero exponent. */
-export type IsZeroExponent<Exponent extends UnitExponent> = Exponent['num'] extends
-  readonly [] ? Exponent['den'] extends readonly [] ? true : false
-  : false;
+export type IsZeroExponent<Exponent extends UnitExponent> =
+  Exponent['num'] extends readonly []
+    ? Exponent['den'] extends readonly [] ? true : false
+    : false;
 
 /** Removes zero-exponent entries from a factor map. */
 export type NormalizeMap<Factors extends UnitMap> = {
@@ -114,7 +116,8 @@ export type IsNaturalNumberText<Value extends string> = Value extends '' ? false
  * Returns `null` for negative/decimal/exponential forms so callers can
  * safely fall back to opaque token handling for invalid exponents.
  */
-export type ParseNat<Value extends string> = IsNaturalNumberText<Value> extends true
+export type ParseNat<Value extends string> = IsNaturalNumberText<Value> extends
+  true
   ? Value extends `${infer Parsed extends number}`
     ? `${Parsed}` extends Value ? Parsed
     : null
@@ -134,7 +137,8 @@ export type RepeatCount<
  * - `m` => m^1
  * - `s^2` => s^2
  */
-export type ParseFactor<Factor extends string> = string extends Factor ? UnknownUnit
+export type ParseFactor<Factor extends string> = string extends Factor
+  ? UnknownUnit
   : Factor extends '' ? UnknownUnit
   : Factor extends 'none' ? UnitParts<EmptyUnitMap>
   : Factor extends `${infer Base}^${infer ExponentText}`
