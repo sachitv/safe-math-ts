@@ -12,21 +12,36 @@
       "tags": [
         "recommended"
       ]
-    }
+    },
+    "exclude": [
+      "npm/",
+      "npm-assets/"
+    ]
+  },
+  "test": {
+    "exclude": [
+      "npm/",
+      "npm-assets/"
+    ]
   },
   "tasks": {
     "precommit": "deno fmt && deno lint && deno test",
     "install-hooks": "deno run -A scripts/install_hooks.ts",
     "check": "deno check mod.ts",
     "test": "deno test --coverage=coverage --coverage-raw-data-only",
-    "coverage": "deno coverage coverage",
+    "coverage": "deno coverage coverage --include='^file:.*/src/'",
     "bench": "deno bench --no-check benchmarks",
     "npm:build": "deno run -A scripts/build_npm.ts",
-    "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'"
+    "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'",
+    "compat": "bash scripts/compat.sh"
   },
   "fmt": {
     "singleQuote": true,
-    "semiColons": true
+    "semiColons": true,
+    "exclude": [
+      "npm/",
+      "npm-assets/"
+    ]
   },
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.42.3"

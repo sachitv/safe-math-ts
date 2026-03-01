@@ -30,7 +30,7 @@ import {
   assertAlmostEquals,
   assertEquals,
   assertThrows,
-} from './assert.test.ts';
+} from './assert.ts';
 
 const assertQuatAlmostEquals = (
   actual: readonly number[],

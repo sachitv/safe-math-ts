@@ -14,7 +14,7 @@ import {
   assertAlmostEquals,
   assertVec3AlmostEquals,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: sensor extrinsics chain with lidar and camera', () => {
   const frame_world = frame('world');

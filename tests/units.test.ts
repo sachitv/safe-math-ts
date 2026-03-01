@@ -32,7 +32,7 @@ import {
   assertEquals,
   assertSameUnitType,
   assertThrows,
-} from './assert.test.ts';
+} from './assert.ts';
 
 type U<Expr extends string> = UnitFromString<Expr>;
 

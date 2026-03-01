@@ -9,7 +9,7 @@ import {
   transformPoint3,
   unit,
 } from '../mod.ts';
-import { assertVec3AlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
+import { assertVec3AlmostEquals, GEOM_EPS } from '../tests/assert.ts';
 
 Deno.test('example: compose vehicle and sensor poses for robotics localization', () => {
   const frame_world = frame('world');

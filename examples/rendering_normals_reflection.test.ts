@@ -16,7 +16,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
+import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.ts';
 
 Deno.test('example: transform normals and reflect an incoming direction', () => {
   const frame_world = frame('world');

@@ -22,7 +22,7 @@ import {
   unit,
 } from '../mod.ts';
 import type { DivUnit, MulUnit, UnitFromString } from '../mod.ts';
-import { assert, assertSameUnitType } from './assert.test.ts';
+import { assert, assertSameUnitType } from './assert.ts';
 
 const frame_world = frame('world');
 const frame_body = frame('body');

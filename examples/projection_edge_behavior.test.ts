@@ -12,7 +12,7 @@ import {
   assertAlmostEquals,
   assertThrows,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: projection edge behavior at near, far, behind-camera, and w=0', () => {
   const frame_view = frame('view');

@@ -10,9 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
       - name: Run tests in deno-only devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@v0.3.1900000417
         with:
           configFile: .devcontainer/deno-only/devcontainer.json
           runCmd: deno test
+
+  test-full-build-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+      - name: Create placeholder credential paths for devcontainer mounts
+        run: |
+          mkdir -p $HOME/.config/opencode
+          mkdir -p $HOME/.local/share/opencode
+          touch $HOME/.local/share/opencode/auth.json
+          mkdir -p $HOME/.codex
+          touch $HOME/.codex/auth.json
+      - name: Run compat tests in full-build-env devcontainer
+        uses: devcontainers/ci@v0.3.1900000417
+        with:
+          configFile: .devcontainer/full-build-env/devcontainer.json
+          runCmd: deno task compat

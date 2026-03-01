@@ -17,7 +17,7 @@ import {
   assertAlmostEquals,
   assertMat4AlmostEquals,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: quaternion interpolation plus TRS cache reuse', () => {
   const frame_world = frame('world');

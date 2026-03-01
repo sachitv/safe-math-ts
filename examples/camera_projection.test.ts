@@ -15,7 +15,7 @@ import {
   assertAlmostEquals,
   assertInRange,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: world point to NDC via lookAt and perspective projection', () => {
   const frame_world = frame('world');

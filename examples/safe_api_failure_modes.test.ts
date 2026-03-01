@@ -10,7 +10,7 @@ import {
   quantity,
   unit,
 } from '../mod.ts';
-import { assertThrows } from '../tests/assert.test.ts';
+import { assertThrows } from '../tests/assert.ts';
 
 Deno.test('example: safe APIs throw on degenerate camera and vector inputs', () => {
   const frame_world = frame('world');

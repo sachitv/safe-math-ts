@@ -40,7 +40,7 @@ import {
   assertAlmostEquals,
   assertEquals,
   assertThrows,
-} from './assert.test.ts';
+} from './assert.ts';
 
 Deno.test('mat4 constructor validates length and identity/transpose work', () => {
   const frame_A = frame('a');
