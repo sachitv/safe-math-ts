@@ -168,11 +168,13 @@ rotateVec3ByQuat(quat_identity_body_world, delta_world);
 const quat_component_x: number = quat_identity_body_world.x;
 void quat_component_x;
 
+// deno-lint-ignore no-constant-condition
 if (false) {
   // @ts-expect-error quaternion component accessors are readonly
   quat_identity_body_world.x = 1;
 }
 
+// deno-lint-ignore no-constant-condition
 if (false) {
   // @ts-expect-error two-frame quaternion constructor must use distinct frames
   quat(frame_world, frame_world, 0, 0, 0, 1);
@@ -224,6 +226,7 @@ const pose_body_world_generic = mat4(
   ],
 );
 
+// deno-lint-ignore no-constant-condition
 if (false) {
   // @ts-expect-error two-frame matrix constructor must use distinct frames
   mat4(frame_world, frame_world, dimensionlessUnit, [

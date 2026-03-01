@@ -63,10 +63,26 @@ Deno.test('example: recover quaternion from rotation matrix and read named compo
 
   // Named property accessors (.x/.y/.z/.w) and standalone accessor functions
   // (quatX/Y/Z/W) both return the same component values.
-  assertAlmostEquals(recovered_world_body.x, quatX(recovered_world_body), GEOM_EPS);
-  assertAlmostEquals(recovered_world_body.y, quatY(recovered_world_body), GEOM_EPS);
-  assertAlmostEquals(recovered_world_body.z, quatZ(recovered_world_body), GEOM_EPS);
-  assertAlmostEquals(recovered_world_body.w, quatW(recovered_world_body), GEOM_EPS);
+  assertAlmostEquals(
+    recovered_world_body.x,
+    quatX(recovered_world_body),
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_world_body.y,
+    quatY(recovered_world_body),
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_world_body.z,
+    quatZ(recovered_world_body),
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_world_body.w,
+    quatW(recovered_world_body),
+    GEOM_EPS,
+  );
 
   // quatFromRotationMatrixUnsafe skips orthonormality validation; on valid input
   // it produces the same result as the safe variant.
@@ -75,10 +91,26 @@ Deno.test('example: recover quaternion from rotation matrix and read named compo
     frame_body,
     rot_world_body,
   );
-  assertAlmostEquals(recovered_unsafe_world_body.x, recovered_world_body.x, GEOM_EPS);
-  assertAlmostEquals(recovered_unsafe_world_body.y, recovered_world_body.y, GEOM_EPS);
-  assertAlmostEquals(recovered_unsafe_world_body.z, recovered_world_body.z, GEOM_EPS);
-  assertAlmostEquals(recovered_unsafe_world_body.w, recovered_world_body.w, GEOM_EPS);
+  assertAlmostEquals(
+    recovered_unsafe_world_body.x,
+    recovered_world_body.x,
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_unsafe_world_body.y,
+    recovered_world_body.y,
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_unsafe_world_body.z,
+    recovered_world_body.z,
+    GEOM_EPS,
+  );
+  assertAlmostEquals(
+    recovered_unsafe_world_body.w,
+    recovered_world_body.w,
+    GEOM_EPS,
+  );
 });
 
 Deno.test('example: quatFromRotationMatrix round-trips an arbitrary normalised quaternion', () => {
