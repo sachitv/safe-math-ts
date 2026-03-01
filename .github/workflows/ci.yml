@@ -49,7 +49,7 @@ jobs:
         run: deno task test
       - name: Check 100% coverage
         run: |
-          COVERAGE=$(NO_COLOR=1 deno coverage coverage --include='^file:.*/src/' 2>&1)
+          COVERAGE=$(NO_COLOR=1 deno task coverage 2>&1)
           echo "$COVERAGE"
           if echo "$COVERAGE" | grep -E "^\| [^-]" | grep -v "File" | grep -qvE "\|\s*100\.0\s*\|\s*100\.0\s*\|"; then
             echo "Coverage is below 100%"
