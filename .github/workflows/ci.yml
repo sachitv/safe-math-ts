@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read # checkout
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - uses: denoland/setup-deno@v2.0.3
         with:
           deno-version: '2.7.1'
@@ -28,7 +28,7 @@ jobs:
     permissions:
       contents: read # checkout
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - uses: denoland/setup-deno@v2.0.3
         with:
           deno-version: '2.7.1'
@@ -41,7 +41,7 @@ jobs:
       contents: read # checkout
       actions: write # upload-artifact
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
       - uses: denoland/setup-deno@v2.0.3
         with:
           deno-version: '2.7.1'
