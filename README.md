@@ -1,5 +1,11 @@
 # safe-math-ts
 
+[![JSR Version](https://img.shields.io/jsr/v/%40sachitv/safe-math-ts?style=flat&logo=jsr&logoColor=white&label=)](https://jsr.io/@sachitv/safe-math-ts)
+[![npm version](https://img.shields.io/npm/v/%40sachitv%2Fsafe-math-ts?style=flat&logo=npm&logoColor=white&label=&color=CB3837)](https://www.npmjs.com/package/@sachitv/safe-math-ts)
+[![CI](https://github.com/sachitv/safe-math-ts/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/sachitv/safe-math-ts/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
+[![Runtime Compatibility](https://github.com/sachitv/safe-math-ts/actions/workflows/compat.yml/badge.svg?branch=main&event=push)](https://github.com/sachitv/safe-math-ts/actions/workflows/compat.yml?query=branch%3Amain+event%3Apush)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](LICENSE)
+
 A zero-dependency Deno/TypeScript 3D math library with strict compile-time
 safety for:
 
@@ -21,6 +27,30 @@ This library intentionally requires explicit tags when creating values:
 This prevents accidental creation of unframed or unitless math objects.
 
 ## Install / import
+
+**Deno (JSR)**
+
+```sh
+deno add jsr:@sachitv/safe-math-ts
+```
+
+```ts
+import { delta3, frame, point3, unit } from '@sachitv/safe-math-ts';
+```
+
+**Node.js / Bun / Cloudflare Workers (npm)**
+
+```sh
+npm install @sachitv/safe-math-ts
+# or
+bun add @sachitv/safe-math-ts
+```
+
+```ts
+import { delta3, frame, point3, unit } from '@sachitv/safe-math-ts';
+```
+
+**Direct import (Deno, no install step)**
 
 ```ts
 import {
