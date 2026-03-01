@@ -6,7 +6,11 @@ import {
   type UnitExpr,
   type UnitTag,
 } from '../units.ts';
-import { quatNormalize, quatNormalizeUnsafe } from './quaternion.ts';
+import {
+  quatFromRotationMatrix,
+  quatNormalize,
+  quatNormalizeUnsafe,
+} from './quaternion.ts';
 import type {
   Delta3,
   Dir3,
@@ -39,8 +43,28 @@ const asMat4 = <
   TranslationUnit extends UnitExpr,
 >(
   values: readonly number[],
-): Mat4<ToFrame, FromFrame, TranslationUnit> =>
-  values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
+): Mat4<ToFrame, FromFrame, TranslationUnit> => {
+  const matrix = values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
+  Object.defineProperties(matrix, {
+    translation: {
+      value: () =>
+        asDelta3<TranslationUnit, ToFrame>(
+          asQuantity<TranslationUnit>(matrix[12]),
+          asQuantity<TranslationUnit>(matrix[13]),
+          asQuantity<TranslationUnit>(matrix[14]),
+        ),
+    },
+    quat: {
+      value: () =>
+        quatFromRotationMatrix(
+          undefined as unknown as FrameTag<ToFrame>,
+          undefined as unknown as FrameTag<FromFrame>,
+          matrix,
+        ),
+    },
+  });
+  return matrix;
+};
 
 /**
  * Narrows a dimensionless affine matrix to a linear matrix type.
@@ -96,6 +120,17 @@ const asPoint3 = <Unit extends UnitExpr, Frame extends string>(
   z: Quantity<Unit>,
 ): Point3<Unit, Frame> => [x, y, z] as unknown as Point3<Unit, Frame>;
 
+type DistinctFramePair<ToFrame extends string, FromFrame extends string> =
+  [ToFrame] extends [FromFrame]
+    ? ([FromFrame] extends [ToFrame] ? never : unknown)
+    : unknown;
+
+const assertDistinctFrames = (toFrame: string, fromFrame: string): void => {
+  if (toFrame === fromFrame) {
+    throw new Error('toFrameTag and fromFrameTag must be different');
+  }
+};
+
 /**
  * Creates a typed 4x4 matrix from 16 column-major values.
  *
@@ -116,7 +151,7 @@ export const mat4Unsafe = <
   TranslationUnit extends UnitExpr,
 >(
   toFrameTag: FrameTag<ToFrame>,
-  fromFrameTag: FrameTag<FromFrame>,
+  fromFrameTag: FrameTag<FromFrame> & DistinctFramePair<ToFrame, FromFrame>,
   translationUnitTag: UnitTag<TranslationUnit>,
   values: readonly number[],
 ): Mat4<ToFrame, FromFrame, TranslationUnit> => {
@@ -147,10 +182,11 @@ export const mat4 = <
   TranslationUnit extends UnitExpr,
 >(
   toFrameTag: FrameTag<ToFrame>,
-  fromFrameTag: FrameTag<FromFrame>,
+  fromFrameTag: FrameTag<FromFrame> & DistinctFramePair<ToFrame, FromFrame>,
   translationUnitTag: UnitTag<TranslationUnit>,
   values: readonly number[],
 ): Mat4<ToFrame, FromFrame, TranslationUnit> => {
+  assertDistinctFrames(toFrameTag, fromFrameTag);
   void toFrameTag;
   void fromFrameTag;
   void translationUnitTag;
@@ -174,30 +210,26 @@ export const mat4Identity = <Frame extends string>(
   dimensionlessUnitTag: UnitTag<Dimensionless>,
 ): LinearMat4<Frame, Frame> => {
   void frameTag;
+  void dimensionlessUnitTag;
   return asLinearMat4(
-    mat4<Frame, Frame, Dimensionless>(
-      frameTag,
-      frameTag,
-      dimensionlessUnitTag,
-      [
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ],
-    ),
+    asMat4<Frame, Frame, Dimensionless>([
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+    ]),
   );
 };
 

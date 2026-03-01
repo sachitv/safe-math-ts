@@ -35,6 +35,7 @@ import {
   transposeMat4,
   unit,
 } from '../mod.ts';
+import type { FrameTag } from '../mod.ts';
 import {
   assert,
   assertAlmostEquals,
@@ -77,6 +78,32 @@ Deno.test('mat4 constructor validates length and identity/transpose work', () =>
   assertEquals(
     transposeMat4(pose_identity_world),
     pose_identity_world,
+  );
+
+  const alias_to = frame_world as unknown as FrameTag<'to'>;
+  const alias_from = frame_world as unknown as FrameTag<'from'>;
+  assertThrows(
+    () =>
+      mat4(alias_to, alias_from, dimensionlessUnit, [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]),
+    Error,
+    'toFrameTag and fromFrameTag must be different',
   );
 });
 
@@ -178,6 +205,65 @@ Deno.test('rotation matrix from quaternion rotates vectors', () => {
   assertAlmostEquals(delta_rotated_world[0], 0, 1e-12);
   assertAlmostEquals(delta_rotated_world[1], 1, 1e-12);
   assertAlmostEquals(delta_rotated_world[2], 0, 1e-12);
+});
+
+Deno.test('mat4 exposes translation() and quat() helpers', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  const dir_axisz_world = dir3(
+    frame_world,
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 0),
+    quantity(dimensionlessUnit, 1),
+  );
+  const quat_z45_world = quatFromAxisAngle(
+    frame_world,
+    dir_axisz_world,
+    Math.PI / 4,
+  );
+  const delta_offset_world = delta3(
+    frame_world,
+    quantity(meter, 2),
+    quantity(meter, -3),
+    quantity(meter, 5),
+  );
+
+  const pose_rigid_world = mat4FromRigidTransform(
+    frame_world,
+    frame_world,
+    quat_z45_world,
+    delta_offset_world,
+  );
+
+  const extracted_translation_world = pose_rigid_world.translation();
+  assertAlmostEquals(extracted_translation_world[0], delta_offset_world[0], 1e-12);
+  assertAlmostEquals(extracted_translation_world[1], delta_offset_world[1], 1e-12);
+  assertAlmostEquals(extracted_translation_world[2], delta_offset_world[2], 1e-12);
+
+  const extracted_quat_world = pose_rigid_world.quat();
+  const pose_roundtrip_world = mat4FromQuaternion(
+    frame_world,
+    frame_world,
+    dimensionlessUnit,
+    extracted_quat_world,
+  );
+  for (let i = 0; i < 12; i += 1) {
+    assertAlmostEquals(pose_roundtrip_world[i]!, pose_rigid_world[i]!, 1e-12);
+  }
+
+  const scale_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    2,
+    1,
+    1,
+  );
+  assertThrows(
+    () => scale_world.quat(),
+    Error,
+    'Input matrix is not a valid rotation matrix',
+  );
 });
 
 Deno.test('compose and invert rigid transforms', () => {
@@ -605,7 +691,7 @@ Deno.test('unsafe matrix helpers skip validation checks', () => {
   );
 
   const pose_invalid_world = mat4Unsafe(
-    frame_world,
+    frame_ndc,
     frame_world,
     dimensionlessUnit,
     [1, 2, 3],
@@ -665,25 +751,25 @@ Deno.test('unsafe matrix helpers skip validation checks', () => {
   );
   assert(!Number.isFinite(pose_normal_unsafe_world[5]));
 
-  const quat_zero_world_world = quat(frame_world, frame_world, 0, 0, 0, 0);
+  const quat_zero_ndc_world = quat(frame_ndc, frame_world, 0, 0, 0, 0);
   const pose_rot_unsafe_world = mat4FromQuaternionUnsafe(
-    frame_world,
+    frame_ndc,
     frame_world,
     dimensionlessUnit,
-    quat_zero_world_world,
+    quat_zero_ndc_world,
   );
   assert(Number.isNaN(pose_rot_unsafe_world[0]));
 
   const pose_trs_unsafe_world = mat4FromTRSUnsafe(
-    frame_world,
+    frame_ndc,
     frame_world,
     delta3(
-      frame_world,
+      frame_ndc,
       quantity(meter, 0),
       quantity(meter, 0),
       quantity(meter, 0),
     ),
-    quat_zero_world_world,
+    quat_zero_ndc_world,
     dir3(
       frame_world,
       quantity(dimensionlessUnit, 1),

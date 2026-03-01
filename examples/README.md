@@ -36,6 +36,14 @@ These are executable, test-backed examples. They are run automatically by
   projection, and `w = 0` handling.
 - `cookbook_constant_accel_loop.test.ts`: demonstrate a unit-safe step loop for
   constant acceleration integration.
+- `quat_from_rotation_matrix.test.ts`: recover a quaternion from a rotation
+  matrix, read named components via `.x/.y/.z/.w` and `quatX/Y/Z/W`, and verify
+  the safe variant rejects non-orthonormal matrices.
+- `mat4_pose_decomposition.test.ts`: extract the translation column and
+  orientation quaternion from a rigid-transform matrix via `.translation()` and
+  `.quat()`, with a round-trip check and a rejection test for scale matrices.
+- `distinct_frame_guard.test.ts`: show that `quat` and `mat4` constructors throw
+  at runtime when the to-frame and from-frame tokens are identical.
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 {
   "name": "@sachitv/safe-math-ts",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "exports": "./mod.ts",
   "compilerOptions": {
     "strict": true,
@@ -28,6 +28,7 @@
     "precommit": "deno fmt && deno lint && deno test",
     "install-hooks": "deno run -A scripts/install_hooks.ts",
     "check": "deno check mod.ts",
+    "jsdoc:lint": "find src -name \"*.ts\" -print0 | xargs -0 deno doc --lint",
     "test": "deno test --coverage=coverage --coverage-raw-data-only",
     "coverage": "deno coverage coverage --include='^file:.*/src/'",
     "bench": "deno bench --no-check benchmarks",

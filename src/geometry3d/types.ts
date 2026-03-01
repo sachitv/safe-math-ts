@@ -1,14 +1,23 @@
 import type { Dimensionless, Quantity, UnitExpr } from '../units.ts';
 
-declare const frameTagBrand: unique symbol;
-declare const vecBrand: unique symbol;
-declare const pointBrand: unique symbol;
-declare const dirBrand: unique symbol;
-declare const deltaBrand: unique symbol;
-declare const quatBrand: unique symbol;
-declare const matBrand: unique symbol;
-declare const linearMatBrand: unique symbol;
-declare const projectionMatBrand: unique symbol;
+/** Internal nominal brand symbol for `FrameTag`. */
+export declare const frameTagBrand: unique symbol;
+/** Internal nominal brand symbol for shared vector tuples. */
+export declare const vecBrand: unique symbol;
+/** Internal nominal brand symbol for `Point3`. */
+export declare const pointBrand: unique symbol;
+/** Internal nominal brand symbol for `Dir3`. */
+export declare const dirBrand: unique symbol;
+/** Internal nominal brand symbol for `Delta3`. */
+export declare const deltaBrand: unique symbol;
+/** Internal nominal brand symbol for `Quaternion`. */
+export declare const quatBrand: unique symbol;
+/** Internal nominal brand symbol for `Mat4`. */
+export declare const matBrand: unique symbol;
+/** Internal nominal brand symbol for `LinearMat4`. */
+export declare const linearMatBrand: unique symbol;
+/** Internal nominal brand symbol for `ProjectionMat4`. */
+export declare const projectionMatBrand: unique symbol;
 
 /** Compile-time token for explicitly declaring frames. */
 export type FrameTag<Frame extends string> = string & {
@@ -25,7 +34,7 @@ export const frame = <Frame extends string>(name: Frame): FrameTag<Frame> =>
   name as unknown as FrameTag<Frame>;
 
 /** Shared raw 3D tuple used by point/direction/displacement variants. */
-type Vec3Base<Unit extends UnitExpr, Frame extends string> =
+export type Vec3Base<Unit extends UnitExpr, Frame extends string> =
   & readonly [
     Quantity<Unit>,
     Quantity<Unit>,
@@ -90,6 +99,12 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
     number,
   ]
   & {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+    readonly w: number;
+  }
+  & {
     readonly [quatBrand]: {
       readonly toFrame: ToFrame;
       readonly fromFrame: FromFrame;
@@ -104,6 +119,14 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
  * `[m00,m10,m20,m30, m01,m11,m21,m31, m02,m12,m22,m32, m03,m13,m23,m33]`.
  * The transform APIs multiply points/directions as column vectors on the right,
  * so `m03/m13/m23` live at indices 12/13/14.
+ *
+ * Instance helpers:
+ * - `translation()` returns the translation column as `Delta3<TranslationUnit, ToFrame>`.
+ * - `quat()` extracts orientation from the upper-left 3x3 block and validates that
+ *   block is a finite orthonormal right-handed rotation basis.
+ *
+ * `quat()` throws when called on non-rigid/non-rotation linear parts (for example,
+ * non-uniform scale or shear matrices).
  */
 export type Mat4<
   ToFrame extends string,
@@ -128,6 +151,10 @@ export type Mat4<
     number,
     number,
   ]
+  & {
+    readonly translation: () => Delta3<TranslationUnit, ToFrame>;
+    readonly quat: () => Quaternion<ToFrame, FromFrame>;
+  }
   & {
     readonly [matBrand]: {
       readonly translationUnit: TranslationUnit;
