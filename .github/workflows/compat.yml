@@ -24,6 +24,8 @@ jobs:
           deno-version: '2.7.1'
       - name: Build npm package (compiles + runs Node tests)
         run: deno task npm:build
+      - name: Remove node_modules before upload
+        run: rm -rf npm/node_modules
       - name: Upload npm artifact
         uses: actions/upload-artifact@v7.0.0
         with:
