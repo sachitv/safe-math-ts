@@ -168,6 +168,11 @@ rotateVec3ByQuat(quat_identity_body_world, delta_world);
 const quat_component_x: number = quat_identity_body_world.x;
 void quat_component_x;
 
+// The `if (false)` blocks below let TypeScript type-check the enclosed code
+// (validating the @ts-expect-error directive) without executing it at runtime.
+// This is necessary because these calls would throw a runtime error in addition
+// to being compile-time type errors — so they cannot be bare top-level
+// statements like the other @ts-expect-error checks in this file.
 // deno-lint-ignore no-constant-condition
 if (false) {
   // @ts-expect-error quaternion component accessors are readonly
@@ -226,6 +231,8 @@ const pose_body_world_generic = mat4(
   ],
 );
 
+// Same pattern: if (false) guards a call that is both a type error and a
+// runtime throw, so the block never executes but TypeScript still checks it.
 // deno-lint-ignore no-constant-condition
 if (false) {
   // @ts-expect-error two-frame matrix constructor must use distinct frames
