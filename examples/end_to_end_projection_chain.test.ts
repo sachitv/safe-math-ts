@@ -16,7 +16,7 @@ import {
   assertInRange,
   assertVec3AlmostEquals,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: world to vehicle to camera to view to NDC chain', () => {
   const frame_world = frame('world');

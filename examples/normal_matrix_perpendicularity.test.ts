@@ -13,7 +13,7 @@ import {
   transformDirection3,
   unit,
 } from '../mod.ts';
-import { assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
+import { assertAlmostEquals, GEOM_EPS } from '../tests/assert.ts';
 
 Deno.test('example: normal matrix keeps transformed normal perpendicular', () => {
   const frame_world = frame('world');

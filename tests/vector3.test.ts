@@ -36,7 +36,7 @@ import {
   assertAlmostEquals,
   assertEquals,
   assertThrows,
-} from './assert.test.ts';
+} from './assert.ts';
 
 Deno.test('delta3 creation and basic operations', () => {
   const meter = unit('m');

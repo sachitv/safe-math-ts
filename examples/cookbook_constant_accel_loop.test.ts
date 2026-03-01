@@ -14,7 +14,7 @@ import {
   assertAlmostEquals,
   assertSameUnitType,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: cookbook constant-acceleration update loop', () => {
   const frame_world = frame('world');

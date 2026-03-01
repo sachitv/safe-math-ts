@@ -14,12 +14,14 @@
       ]
     },
     "exclude": [
-      "tests/compat/"
+      "npm/",
+      "npm-assets/"
     ]
   },
   "test": {
     "exclude": [
-      "tests/compat/"
+      "npm/",
+      "npm-assets/"
     ]
   },
   "tasks": {
@@ -27,17 +29,18 @@
     "install-hooks": "deno run -A scripts/install_hooks.ts",
     "check": "deno check mod.ts",
     "test": "deno test --coverage=coverage --coverage-raw-data-only",
-    "coverage": "deno coverage coverage",
+    "coverage": "deno coverage coverage --include='^file:.*/src/'",
     "bench": "deno bench --no-check benchmarks",
     "npm:build": "deno run -A scripts/build_npm.ts",
     "get-version": "deno eval 'console.log(JSON.parse(Deno.readTextFileSync(\"deno.json\")).version)'",
-    "compat": "bash tests/compat/run-all.sh"
+    "compat": "bash scripts/compat.sh"
   },
   "fmt": {
     "singleQuote": true,
     "semiColons": true,
     "exclude": [
-      "tests/compat/"
+      "npm/",
+      "npm-assets/"
     ]
   },
   "imports": {

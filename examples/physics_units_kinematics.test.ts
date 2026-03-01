@@ -14,7 +14,7 @@ import {
   assertAlmostEquals,
   assertSameUnitType,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: unit-safe constant-acceleration kinematics', () => {
   const frame_world = frame('world');

@@ -9,7 +9,8 @@ on:
 permissions: {}
 
 jobs:
-  # Build the npm package once and share it across jobs that need it (browser only).
+  # Build the npm package once (compiles tests + runs Node tests via dnt) and
+  # share the artifact with all downstream jobs.
   build-npm:
     name: Build npm package
     runs-on: ubuntu-24.04-arm
@@ -21,7 +22,7 @@ jobs:
       - uses: denoland/setup-deno@v2.0.3
         with:
           deno-version: '2.7.1'
-      - name: Build npm package
+      - name: Build npm package (compiles + runs Node tests)
         run: deno task npm:build
       - name: Upload npm artifact
         uses: actions/upload-artifact@v7.0.0
@@ -29,49 +30,78 @@ jobs:
           name: npm-build
           path: npm/
 
-  # Bun: full test suite via Deno.test shim (imports TypeScript directly).
+  # Bun: compiled npm tests via dnt's test_runner (Bun supports CJS natively).
   compat-bun:
     name: Compat — Bun
+    needs: build-npm
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: oven-sh/setup-bun@v2
-      - name: Run Bun compat test
-        run: bun test --preload ./tests/compat/bun-deno-shim.ts ./tests/*.test.ts ./examples/*.test.ts
-
-  # Node.js: full test suite via Deno.test shim (Node 24 strips TypeScript natively).
-  compat-node:
-    name: Compat — Node.js
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-      - name: Run Node.js compat test
-        run: node --import ./tests/compat/node-deno-shim.mjs --test ./tests/*.test.ts ./examples/*.test.ts
-
-  # Cloudflare Workers: full test suite via Deno.test shim inside workerd.
-  compat-cloudflare:
-    name: Compat — Cloudflare Workers
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: read
+      actions: read # download-artifact
     steps:
       - uses: actions/checkout@v6.0.2
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
-      - name: Install compat tooling
-        run: cd tests/compat && npm install
-      - name: Run Cloudflare Workers compat test
-        run: cd tests/compat/cloudflare && npx vitest run
+      - uses: oven-sh/setup-bun@v2
+      - name: Download npm build
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-build
+          path: npm/
+      - name: Install npm deps
+        run: cd npm && npm install
+      - name: Run Bun compat test
+        run: cd npm && bun run ./test_runner.cjs
 
-  # Browser: Playwright serves the project root and runs the ESM smoke test in Chromium.
+  # Node.js: compiled npm tests (also ran during build-npm via dnt, re-run here
+  # for explicit visibility in CI).
+  compat-node:
+    name: Compat — Node.js
+    needs: build-npm
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      actions: read # download-artifact
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Download npm build
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-build
+          path: npm/
+      - name: Install npm deps
+        run: cd npm && npm install
+      - name: Run Node.js compat test
+        run: cd npm && node test_runner.cjs
+
+  # Cloudflare Workers: compiled npm tests inside workerd via vitest pool.
+  compat-cloudflare:
+    name: Compat — Cloudflare Workers
+    needs: build-npm
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      actions: read # download-artifact
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Download npm build
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-build
+          path: npm/
+      - name: Install npm deps
+        run: cd npm && npm install
+      - name: Run Cloudflare Workers compat test
+        run: cd npm && npx vitest run -c vitest.cloudflare.config.ts
+
+  # Browser: compiled npm tests inside Chromium via @vitest/browser + Playwright.
   compat-browser:
     name: Compat — Browser (Chromium)
     needs: build-npm
@@ -89,9 +119,9 @@ jobs:
         with:
           name: npm-build
           path: npm/
-      - name: Install compat tooling
-        run: cd tests/compat && npm install
+      - name: Install npm deps
+        run: cd npm && npm install
       - name: Install Playwright browsers
-        run: cd tests/compat && npx playwright install chromium --with-deps
+        run: cd npm && npx playwright install chromium --with-deps
       - name: Run browser compat test
-        run: cd tests/compat/browser && npx playwright test
+        run: cd npm && npx vitest run -c vitest.browser.config.ts

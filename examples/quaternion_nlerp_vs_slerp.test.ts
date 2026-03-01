@@ -9,7 +9,7 @@ import {
   rotateVec3ByQuat,
   unit,
 } from '../mod.ts';
-import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.test.ts';
+import { assert, assertAlmostEquals, GEOM_EPS } from '../tests/assert.ts';
 
 Deno.test('example: quatNlerp versus quatSlerp interpolation behavior', () => {
   const frame_world = frame('world');

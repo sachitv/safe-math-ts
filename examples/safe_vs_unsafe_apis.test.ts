@@ -13,7 +13,7 @@ import {
   assertThrows,
   assertVec3AlmostEquals,
   GEOM_EPS,
-} from '../tests/assert.test.ts';
+} from '../tests/assert.ts';
 
 Deno.test('example: safe and unsafe API behavior on validated and degenerate inputs', () => {
   const frame_world = frame('world');
