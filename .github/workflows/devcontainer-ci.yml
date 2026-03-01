@@ -26,4 +26,4 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           configFile: .devcontainer/full-build-env/devcontainer.json
-          runCmd: bash tests/compat/run-all.sh
+          runCmd: deno task compat
