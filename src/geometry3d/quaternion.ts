@@ -714,27 +714,28 @@ export const quatFromEulerUnsafe = <Frame extends string>(
   zRadians: number,
   order: EulerOrder = 'ZYX',
 ): Quaternion<Frame, Frame> => {
-  const makeAxisQuat = (axis: 'X' | 'Y' | 'Z'): Quaternion<Frame, Frame> => {
-    const angle = axis === 'X' ? xRadians : axis === 'Y' ? yRadians : zRadians;
-    const half = angle * 0.5;
-    const sinHalf = Math.sin(half);
-    const cosHalf = Math.cos(half);
+  // Performance optimization: Pre-calculate axis quaternions once to avoid
+  // per-iteration helper function calls and branching inside the Euler loop.
+  const xHalf = xRadians * 0.5;
+  const xSinHalf = Math.sin(xHalf);
+  const xCosHalf = Math.cos(xHalf);
+  const quatX = asQuaternion<Frame, Frame>(xSinHalf, 0, 0, xCosHalf);
 
-    if (axis === 'X') {
-      return asQuaternion<Frame, Frame>(sinHalf, 0, 0, cosHalf);
-    }
+  const yHalf = yRadians * 0.5;
+  const ySinHalf = Math.sin(yHalf);
+  const yCosHalf = Math.cos(yHalf);
+  const quatY = asQuaternion<Frame, Frame>(0, ySinHalf, 0, yCosHalf);
 
-    if (axis === 'Y') {
-      return asQuaternion<Frame, Frame>(0, sinHalf, 0, cosHalf);
-    }
-
-    return asQuaternion<Frame, Frame>(0, 0, sinHalf, cosHalf);
-  };
+  const zHalf = zRadians * 0.5;
+  const zSinHalf = Math.sin(zHalf);
+  const zCosHalf = Math.cos(zHalf);
+  const quatZ = asQuaternion<Frame, Frame>(0, 0, zSinHalf, zCosHalf);
 
   let quat_result = quatIdentity(frameTag);
   for (let index = 0; index < order.length; index += 1) {
     const axis = order[index] as 'X' | 'Y' | 'Z';
-    quat_result = composeQuats(makeAxisQuat(axis), quat_result);
+    const axisQuat = axis === 'X' ? quatX : axis === 'Y' ? quatY : quatZ;
+    quat_result = composeQuats(axisQuat, quat_result);
   }
 
   return quatNormalizeUnsafe(quat_result);
