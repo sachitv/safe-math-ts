@@ -714,8 +714,8 @@ export const quatFromEulerUnsafe = <Frame extends string>(
   zRadians: number,
   order: EulerOrder = 'ZYX',
 ): Quaternion<Frame, Frame> => {
-  // Performance optimization: Pre-calculate axis quaternions to avoid redundant
-  // trigonometric operations and helper function overhead inside the Euler loop.
+  // Performance optimization: Pre-calculate axis quaternions once to avoid
+  // per-iteration helper function calls and branching inside the Euler loop.
   const xHalf = xRadians * 0.5;
   const xSinHalf = Math.sin(xHalf);
   const xCosHalf = Math.cos(xHalf);
