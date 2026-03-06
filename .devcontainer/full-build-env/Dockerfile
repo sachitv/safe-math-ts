@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 # Install Playwright Chromium OS-level dependencies non-interactively
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libasound2t64 \
     libatk-bridge2.0-0t64 \
     libatk1.0-0t64 \
