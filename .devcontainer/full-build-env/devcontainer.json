@@ -1,6 +1,8 @@
 {
   "name": "Full Build Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/devcontainers-community/features/deno:1": {
       "version": "2.7.1"
@@ -24,7 +26,6 @@
     "source=${localEnv:HOME}/.local/share/opencode/auth.json,target=/home/vscode/.local/share/opencode/auth.json,type=bind,consistency=cached,readonly=true",
     "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,consistency=cached,readonly=true"
   ],
-  "postCreateCommand": "bash .devcontainer/full-build-env/post-create.sh",
   "customizations": {
     "vscode": {
       "settings": {},
