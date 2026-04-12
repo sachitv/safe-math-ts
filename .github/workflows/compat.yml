@@ -27,7 +27,7 @@ jobs:
       - name: Remove node_modules before upload
         run: rm -rf npm/node_modules
       - name: Upload npm artifact
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: npm-build
           path: npm/
