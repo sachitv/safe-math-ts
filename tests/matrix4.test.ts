@@ -21,6 +21,8 @@ import {
   mat4Ortho,
   mat4Perspective,
   mat4PerspectiveUnsafe,
+  mat4Quat,
+  mat4Translation,
   mat4Unsafe,
   normalMatrixFromMat4,
   normalMatrixFromMat4Unsafe,
@@ -236,7 +238,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     delta_offset_world,
   );
 
-  const extracted_translation_world = pose_rigid_world.translation();
+  const extracted_translation_world = mat4Translation(pose_rigid_world);
   assertAlmostEquals(
     extracted_translation_world[0],
     delta_offset_world[0],
@@ -253,7 +255,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     1e-12,
   );
 
-  const extracted_quat_world = pose_rigid_world.quat();
+  const extracted_quat_world = mat4Quat(pose_rigid_world);
   const pose_roundtrip_world = mat4FromQuaternion(
     frame_world,
     frame_world,
@@ -272,7 +274,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     1,
   );
   assertThrows(
-    () => scale_world.quat(),
+    () => mat4Quat(scale_world),
     Error,
     'Input matrix is not a valid rotation matrix',
   );

@@ -63,14 +63,19 @@ Deno.test('quaternion constructors and norms', () => {
   assertEquals(quatConjugate(quat_raw_AB), [-1, -2, -3, 4]);
   assertEquals(quatNormSquared(quat_raw_AB), 30);
   assertAlmostEquals(quatNorm(quat_raw_AB), Math.sqrt(30));
-  assertEquals(quat_raw_AB.x, 1);
-  assertEquals(quat_raw_AB.y, 2);
-  assertEquals(quat_raw_AB.z, 3);
-  assertEquals(quat_raw_AB.w, 4);
   assertEquals(quatX(quat_raw_AB), 1);
   assertEquals(quatY(quat_raw_AB), 2);
   assertEquals(quatZ(quat_raw_AB), 3);
   assertEquals(quatW(quat_raw_AB), 4);
+});
+
+Deno.test('quat() constructs a plain array with no per-instance accessors', () => {
+  const frame_A = frame('a');
+  const frame_B = frame('b');
+  const quat_a = quat(frame_A, frame_B, 1, 2, 3, 4);
+
+  assertEquals(Object.getPrototypeOf(quat_a), Array.prototype);
+  assertEquals(Object.keys(quat_a).length, 4);
 });
 
 Deno.test('quaternion normalization inversion and errors', () => {

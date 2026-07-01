@@ -425,7 +425,7 @@ export const normalizeVec3 = <Unit extends UnitExpr, Frame extends string>(
   value: Delta3<Unit, Frame>,
 ): Dir3<Frame> => {
   const magnitude = lengthVec3(value);
-  if (magnitude <= NEAR_ZERO) {
+  if (!Number.isFinite(magnitude) || magnitude <= NEAR_ZERO) {
     throw new Error('Cannot normalize a zero-length vector');
   }
 
@@ -533,7 +533,10 @@ export const projectVec3 = <
   const ontoLengthSquared = onto[0] * onto[0] +
     onto[1] * onto[1] +
     onto[2] * onto[2];
-  if (ontoLengthSquared <= NEAR_ZERO * NEAR_ZERO) {
+  if (
+    !Number.isFinite(ontoLengthSquared) ||
+    ontoLengthSquared <= NEAR_ZERO * NEAR_ZERO
+  ) {
     throw new Error('Cannot project onto a zero-length vector');
   }
 
@@ -630,7 +633,10 @@ export const angleBetweenVec3 = <
   const leftLength = Math.hypot(left[0], left[1], left[2]);
   const rightLength = Math.hypot(right[0], right[1], right[2]);
 
-  if (leftLength <= NEAR_ZERO || rightLength <= NEAR_ZERO) {
+  if (
+    !Number.isFinite(leftLength) || leftLength <= NEAR_ZERO ||
+    !Number.isFinite(rightLength) || rightLength <= NEAR_ZERO
+  ) {
     throw new Error('Cannot compute angle with a zero-length vector');
   }
 

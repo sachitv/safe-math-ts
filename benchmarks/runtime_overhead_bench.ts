@@ -2,8 +2,10 @@ import {
   add,
   addVec3,
   composeMat4,
+  composeQuats,
   delta3,
   mat4FromTranslation,
+  quat,
 } from '../mod.ts';
 import { quantity, unit } from '../src/units.ts';
 import { frame } from '../src/geometry3d/types.ts';
@@ -33,6 +35,21 @@ const rawComposeMat4 = (
   }
 
   return output;
+};
+
+const rawComposeQuat = (
+  left: readonly number[],
+  right: readonly number[],
+): number[] => {
+  const [x1, y1, z1, w1] = left;
+  const [x2, y2, z2, w2] = right;
+
+  return [
+    w2! * x1! + x2! * w1! + y2! * z1! - z2! * y1!,
+    w2! * y1! - x2! * z1! + y2! * w1! + z2! * x1!,
+    w2! * z1! + x2! * y1! - y2! * x1! + z2! * w1!,
+    w2! * w1! - x2! * x1! - y2! * y1! - z2! * z1!,
+  ];
 };
 
 Deno.bench({
@@ -168,6 +185,57 @@ Deno.bench({
   for (let index = 0; index < ITERATIONS; index += 1) {
     const out = composeMat4(first, second);
     total += out[3] + out[7] + out[11];
+  }
+
+  consume(total);
+});
+
+Deno.bench({
+  name: 'quat compose raw [baseline]',
+  group: 'quat compose',
+  baseline: true,
+}, () => {
+  const world = frame('world');
+  const body = frame('body');
+  const first = quat(world, body, 0, 0, 0.3826834323650898, 0.9238795325112867);
+  const second = quat(
+    body,
+    world,
+    0.3826834323650898,
+    0,
+    0,
+    0.9238795325112867,
+  );
+  let total = 0;
+
+  for (let index = 0; index < ITERATIONS; index += 1) {
+    const out = rawComposeQuat(first, second);
+    total += out[0]! + out[1]! + out[2]! + out[3]!;
+  }
+
+  consume(total);
+});
+
+Deno.bench({
+  name: 'quat compose helper composeQuats()',
+  group: 'quat compose',
+}, () => {
+  const world = frame('world');
+  const body = frame('body');
+  const first = quat(world, body, 0, 0, 0.3826834323650898, 0.9238795325112867);
+  const second = quat(
+    body,
+    world,
+    0.3826834323650898,
+    0,
+    0,
+    0.9238795325112867,
+  );
+  let total = 0;
+
+  for (let index = 0; index < ITERATIONS; index += 1) {
+    const out = composeQuats(first, second);
+    total += out[0] + out[1] + out[2] + out[3];
   }
 
   consume(total);

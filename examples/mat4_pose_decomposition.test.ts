@@ -5,6 +5,8 @@ import {
   mat4FromQuaternion,
   mat4FromRigidTransform,
   mat4FromScale,
+  mat4Quat,
+  mat4Translation,
   quantity,
   quat,
   rotateVec3ByQuat,
@@ -40,14 +42,14 @@ Deno.test('example: extract translation and orientation from a rigid transform',
     delta_offset_world,
   );
 
-  // .translation() returns the translation column as a typed Delta3.
-  const extracted_translation_world = pose_world_body.translation();
+  // mat4Translation() returns the translation column as a typed Delta3.
+  const extracted_translation_world = mat4Translation(pose_world_body);
   assertAlmostEquals(extracted_translation_world[0], 5, GEOM_EPS);
   assertAlmostEquals(extracted_translation_world[1], -2, GEOM_EPS);
   assertAlmostEquals(extracted_translation_world[2], 1, GEOM_EPS);
 
-  // .quat() extracts and validates the orientation from the upper-left 3×3 block.
-  const extracted_quat_world_body = pose_world_body.quat();
+  // mat4Quat() extracts and validates the orientation from the upper-left 3×3 block.
+  const extracted_quat_world_body = mat4Quat(pose_world_body);
 
   // Rotating +X body by the extracted quaternion should give +Y world (90° Z rotation).
   const delta_x_body = delta3(
@@ -79,14 +81,14 @@ Deno.test('example: extract translation and orientation from a rigid transform',
   }
 });
 
-Deno.test('example: mat4.quat() throws on a non-rotation linear part', () => {
+Deno.test('example: mat4Quat() throws on a non-rotation linear part', () => {
   const frame_world = frame('world');
 
   // A non-uniform scale matrix has non-unit columns and is not a valid rotation.
   const scale_world = mat4FromScale(frame_world, dimensionlessUnit, 2, 1, 1);
 
   assertThrows(
-    () => scale_world.quat(),
+    () => mat4Quat(scale_world),
     Error,
     'Input matrix is not a valid rotation matrix',
   );

@@ -151,9 +151,9 @@ const point_L = transformPoint3(pose_LV, point_V);
 - Safe APIs validate inputs and throw on invalid/degenerate cases.
 - Unsafe APIs skip validation and can produce `NaN`/`Infinity` on invalid
   inputs.
-- `matrix.quat()` is a safe helper: it validates that the upper-left 3x3 block
-  is a finite orthonormal rotation basis and throws for non-rotation matrices
-  (for example non-uniform scale/shear).
+- `mat4Quat(matrix)` is a safe helper: it validates that the upper-left 3x3
+  block is a finite orthonormal rotation basis and throws for non-rotation
+  matrices (for example non-uniform scale/shear).
 - Recommended pattern:
   1. Validate at system boundaries with safe APIs.
   2. Use unsafe APIs only in hot paths where inputs are already guaranteed.
@@ -305,9 +305,9 @@ Construction:
 
 Composition and transforms:
 
-- Matrix instance helpers: `matrix.translation()`, `matrix.quat()`
-  - `matrix.translation()` reads translation from indices `12/13/14`.
-  - `matrix.quat()` extracts rotation and throws if the matrix linear part is
+- Matrix extraction helpers: `mat4Translation`, `mat4Quat`
+  - `mat4Translation(matrix)` reads translation from indices `12/13/14`.
+  - `mat4Quat(matrix)` extracts rotation and throws if the matrix linear part is
     not a valid rotation basis.
 - `transposeMat4`
 - `composeMat4`

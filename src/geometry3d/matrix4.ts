@@ -43,28 +43,8 @@ const asMat4 = <
   TranslationUnit extends UnitExpr,
 >(
   values: readonly number[],
-): Mat4<ToFrame, FromFrame, TranslationUnit> => {
-  const matrix = values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
-  Object.defineProperties(matrix, {
-    translation: {
-      value: () =>
-        asDelta3<TranslationUnit, ToFrame>(
-          asQuantity<TranslationUnit>(matrix[12]),
-          asQuantity<TranslationUnit>(matrix[13]),
-          asQuantity<TranslationUnit>(matrix[14]),
-        ),
-    },
-    quat: {
-      value: () =>
-        quatFromRotationMatrix(
-          undefined as unknown as FrameTag<ToFrame>,
-          undefined as unknown as FrameTag<FromFrame>,
-          matrix,
-        ),
-    },
-  });
-  return matrix;
-};
+): Mat4<ToFrame, FromFrame, TranslationUnit> =>
+  values as unknown as Mat4<ToFrame, FromFrame, TranslationUnit>;
 
 /**
  * Narrows a dimensionless affine matrix to a linear matrix type.
@@ -443,6 +423,49 @@ export const mat4FromRigidTransform = <
     1,
   ]);
 };
+
+/**
+ * Reads the translation column out of an affine transform.
+ *
+ * @param value Affine matrix.
+ * @returns Translation column as a typed displacement.
+ */
+export const mat4Translation = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  value: Mat4<ToFrame, NoInfer<FromFrame>, TranslationUnit>,
+): Delta3<TranslationUnit, ToFrame> =>
+  asDelta3<TranslationUnit, ToFrame>(
+    asQuantity<TranslationUnit>(value[12]),
+    asQuantity<TranslationUnit>(value[13]),
+    asQuantity<TranslationUnit>(value[14]),
+  );
+
+/**
+ * Extracts orientation from the upper-left 3x3 block of an affine transform.
+ *
+ * Validates that the block is a finite orthonormal right-handed rotation
+ * basis.
+ *
+ * @param value Affine matrix.
+ * @returns Orientation quaternion.
+ * @throws {Error} When the linear part is not a valid rotation basis (for
+ * example, non-uniform scale or shear).
+ */
+export const mat4Quat = <
+  ToFrame extends string,
+  FromFrame extends string,
+  TranslationUnit extends UnitExpr,
+>(
+  value: Mat4<ToFrame, FromFrame, TranslationUnit>,
+): Quaternion<ToFrame, FromFrame> =>
+  quatFromRotationMatrix(
+    undefined as unknown as FrameTag<ToFrame>,
+    undefined as unknown as FrameTag<FromFrame>,
+    value,
+  );
 
 /**
  * Builds an affine transform from translation, rotation, and non-uniform scale.
@@ -1066,7 +1089,7 @@ export const mat4LookAt = <
   const forwardY = point_target_from[1] - point_eye_from[1];
   const forwardZ = point_target_from[2] - point_eye_from[2];
   const forwardLength = Math.hypot(forwardX, forwardY, forwardZ);
-  if (forwardLength === 0) {
+  if (!(forwardLength > 0)) {
     throw new Error('LookAt requires eye and target to be distinct');
   }
 
@@ -1075,7 +1098,7 @@ export const mat4LookAt = <
   const dir_forward_z = forwardZ / forwardLength;
 
   const upLength = Math.hypot(dir_up_from[0], dir_up_from[1], dir_up_from[2]);
-  if (upLength === 0) {
+  if (!(upLength > 0)) {
     throw new Error('LookAt requires a non-zero up direction');
   }
   const upX = dir_up_from[0] / upLength;
@@ -1086,7 +1109,7 @@ export const mat4LookAt = <
   const rightY = dir_forward_z * upX - dir_forward_x * upZ;
   const rightZ = dir_forward_x * upY - dir_forward_y * upX;
   const rightLength = Math.hypot(rightX, rightY, rightZ);
-  if (rightLength === 0) {
+  if (!(rightLength > 0)) {
     throw new Error('LookAt up direction cannot be parallel to forward');
   }
 
@@ -1314,6 +1337,10 @@ const assertRigidTransform = (
   const col2y = value[9]!;
   const col2z = value[10]!;
 
+  const tx = value[12]!;
+  const ty = value[13]!;
+  const tz = value[14]!;
+
   const norm0 = col0x * col0x + col0y * col0y + col0z * col0z;
   const norm1 = col1x * col1x + col1y * col1y + col1z * col1z;
   const norm2 = col2x * col2x + col2y * col2y + col2z * col2z;
@@ -1321,22 +1348,35 @@ const assertRigidTransform = (
   const dot01 = col0x * col1x + col0y * col1y + col0z * col1z;
   const dot02 = col0x * col2x + col0y * col2y + col0z * col2z;
   const dot12 = col1x * col2x + col1y * col2y + col1z * col2z;
+
+  // Determinant of the rotation columns via scalar triple product; a rigid
+  // (orientation-preserving) rotation has determinant +1, while a reflection
+  // has determinant -1 despite also having orthonormal columns.
+  const determinant = col0x * (col1y * col2z - col1z * col2y) +
+    col0y * (col1z * col2x - col1x * col2z) +
+    col0z * (col1x * col2y - col1y * col2x);
+
   const hasFiniteNorms = Number.isFinite(norm0) &&
     Number.isFinite(norm1) &&
-    Number.isFinite(norm2);
-  const hasUnitLengthRows = isApproximately(norm0, 1, epsilon) &&
+    Number.isFinite(norm2) &&
+    Number.isFinite(tx) &&
+    Number.isFinite(ty) &&
+    Number.isFinite(tz);
+  const hasUnitLengthColumns = isApproximately(norm0, 1, epsilon) &&
     isApproximately(norm1, 1, epsilon) &&
     isApproximately(norm2, 1, epsilon);
-  const hasOrthogonalRows = isApproximately(dot01, 0, epsilon) &&
+  const hasOrthogonalColumns = isApproximately(dot01, 0, epsilon) &&
     isApproximately(dot02, 0, epsilon) &&
     isApproximately(dot12, 0, epsilon);
+  const isOrientationPreserving = isApproximately(determinant, 1, epsilon);
   const hasAffineBottomRow = isApproximately(value[3]!, 0, epsilon) &&
     isApproximately(value[7]!, 0, epsilon) &&
     isApproximately(value[11]!, 0, epsilon) &&
     isApproximately(value[15]!, 1, epsilon);
   const isRigid = hasFiniteNorms &&
-    hasUnitLengthRows &&
-    hasOrthogonalRows &&
+    hasUnitLengthColumns &&
+    hasOrthogonalColumns &&
+    isOrientationPreserving &&
     hasAffineBottomRow;
 
   if (!isRigid) {
@@ -1548,7 +1588,20 @@ export const normalMatrixFromMat4 = <
   const co20 = d * h - e * g;
 
   const determinant = a * co00 + b * co10 + c * co20;
-  if (Math.abs(determinant) < 1e-10) {
+
+  // Compare the determinant against the largest column length cubed (the
+  // determinant magnitude a well-conditioned matrix with that length scale
+  // would have) rather than a fixed absolute epsilon. This keeps the check
+  // scale-invariant: a uniformly tiny but well-conditioned matrix (e.g. a
+  // millimeter-scale transform) is not rejected, while an axis collapsed
+  // relative to the others is still caught as too singular/ill-conditioned
+  // to invert-transpose meaningfully.
+  const lenCol0 = Math.hypot(a, d, g);
+  const lenCol1 = Math.hypot(b, e, h);
+  const lenCol2 = Math.hypot(c, f, i);
+  const maxColLength = Math.max(lenCol0, lenCol1, lenCol2);
+  const relativeEpsilon = 1e-10;
+  if (!(Math.abs(determinant) > relativeEpsilon * maxColLength ** 3)) {
     throw new Error('Cannot build a normal matrix from a singular transform');
   }
 

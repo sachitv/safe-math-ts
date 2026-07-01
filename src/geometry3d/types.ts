@@ -30,8 +30,9 @@ export type FrameTag<Frame extends string> = string & {
  * @param name Frame identifier text.
  * @returns Branded frame token used by frame-aware APIs.
  */
-export const frame = <Frame extends string>(name: Frame): FrameTag<Frame> =>
-  name as unknown as FrameTag<Frame>;
+export const frame = <Frame extends string>(
+  name: string extends Frame ? never : Frame,
+): FrameTag<Frame> => name as unknown as FrameTag<Frame>;
 
 /** Shared raw 3D tuple used by point/direction/displacement variants. */
 export type Vec3Base<Unit extends UnitExpr, Frame extends string> =
@@ -90,7 +91,12 @@ export type Delta3<Unit extends UnitExpr, Frame extends string> =
     };
   };
 
-/** Quaternion rotation in `<ToFrame, FromFrame>` order. */
+/**
+ * Quaternion rotation in `<ToFrame, FromFrame>` order.
+ *
+ * Components are stored as a `[x, y, z, w]` tuple; use `quatX`/`quatY`/
+ * `quatZ`/`quatW` to read named components.
+ */
 export type Quaternion<ToFrame extends string, FromFrame extends string> =
   & readonly [
     number,
@@ -98,12 +104,6 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
     number,
     number,
   ]
-  & {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-    readonly w: number;
-  }
   & {
     readonly [quatBrand]: {
       readonly toFrame: ToFrame;
@@ -120,13 +120,11 @@ export type Quaternion<ToFrame extends string, FromFrame extends string> =
  * The transform APIs multiply points/directions as column vectors on the right,
  * so `m03/m13/m23` live at indices 12/13/14.
  *
- * Instance helpers:
- * - `translation()` returns the translation column as `Delta3<TranslationUnit, ToFrame>`.
- * - `quat()` extracts orientation from the upper-left 3x3 block and validates that
- *   block is a finite orthonormal right-handed rotation basis.
- *
- * `quat()` throws when called on non-rigid/non-rotation linear parts (for example,
- * non-uniform scale or shear matrices).
+ * Use `mat4Translation(matrix)` to read the translation column as a
+ * `Delta3<TranslationUnit, ToFrame>`, and `mat4Quat(matrix)` to extract
+ * orientation from the upper-left 3x3 block (validates that block is a
+ * finite orthonormal right-handed rotation basis, throwing for non-rigid
+ * linear parts such as non-uniform scale or shear).
  */
 export type Mat4<
   ToFrame extends string,
@@ -151,10 +149,6 @@ export type Mat4<
     number,
     number,
   ]
-  & {
-    readonly translation: () => Delta3<TranslationUnit, ToFrame>;
-    readonly quat: () => Quaternion<ToFrame, FromFrame>;
-  }
   & {
     readonly [matBrand]: {
       readonly translationUnit: TranslationUnit;

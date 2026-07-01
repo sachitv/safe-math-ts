@@ -46,24 +46,8 @@ const asQuaternion = <ToFrame extends string, FromFrame extends string>(
   y: number,
   z: number,
   w: number,
-): Quaternion<ToFrame, FromFrame> => {
-  const value = [x, y, z, w] as [number, number, number, number];
-  Object.defineProperties(value, {
-    x: {
-      get: () => value[0],
-    },
-    y: {
-      get: () => value[1],
-    },
-    z: {
-      get: () => value[2],
-    },
-    w: {
-      get: () => value[3],
-    },
-  });
-  return value as unknown as Quaternion<ToFrame, FromFrame>;
-};
+): Quaternion<ToFrame, FromFrame> =>
+  [x, y, z, w] as unknown as Quaternion<ToFrame, FromFrame>;
 
 /** Axis composition order for Euler rotations. */
 export type EulerOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
@@ -203,7 +187,7 @@ export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): Quaternion<ToFrame, FromFrame> => {
   const norm = quatNorm(value);
-  if (norm <= NEAR_ZERO) {
+  if (!Number.isFinite(norm) || norm <= NEAR_ZERO) {
     throw new Error('Cannot normalize a zero-length quaternion');
   }
 
@@ -248,7 +232,7 @@ export const quatInverse = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): Quaternion<FromFrame, ToFrame> => {
   const normSquared = quatNormSquared(value);
-  if (normSquared <= NEAR_ZERO * NEAR_ZERO) {
+  if (!Number.isFinite(normSquared) || normSquared <= NEAR_ZERO * NEAR_ZERO) {
     throw new Error('Cannot invert a zero-length quaternion');
   }
 

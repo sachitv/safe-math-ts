@@ -61,26 +61,26 @@ Deno.test('example: recover quaternion from rotation matrix and read named compo
     GEOM_EPS,
   );
 
-  // Named property accessors (.x/.y/.z/.w) and standalone accessor functions
-  // (quatX/Y/Z/W) both return the same component values.
+  // Named accessor functions (quatX/Y/Z/W) read the tuple's components; the
+  // round-tripped quaternion matches the original component-wise.
   assertAlmostEquals(
-    recovered_world_body.x,
     quatX(recovered_world_body),
+    quatX(quat_z45_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_world_body.y,
     quatY(recovered_world_body),
+    quatY(quat_z45_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_world_body.z,
     quatZ(recovered_world_body),
+    quatZ(quat_z45_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_world_body.w,
     quatW(recovered_world_body),
+    quatW(quat_z45_world_body),
     GEOM_EPS,
   );
 
@@ -92,23 +92,23 @@ Deno.test('example: recover quaternion from rotation matrix and read named compo
     rot_world_body,
   );
   assertAlmostEquals(
-    recovered_unsafe_world_body.x,
-    recovered_world_body.x,
+    quatX(recovered_unsafe_world_body),
+    quatX(recovered_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_unsafe_world_body.y,
-    recovered_world_body.y,
+    quatY(recovered_unsafe_world_body),
+    quatY(recovered_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_unsafe_world_body.z,
-    recovered_world_body.z,
+    quatZ(recovered_unsafe_world_body),
+    quatZ(recovered_world_body),
     GEOM_EPS,
   );
   assertAlmostEquals(
-    recovered_unsafe_world_body.w,
-    recovered_world_body.w,
+    quatW(recovered_unsafe_world_body),
+    quatW(recovered_world_body),
     GEOM_EPS,
   );
 });
