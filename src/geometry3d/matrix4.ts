@@ -6,6 +6,7 @@ import {
   type UnitExpr,
   type UnitTag,
 } from '../units.ts';
+import { isFiniteAndAbove } from './numeric.ts';
 import {
   quatFromRotationMatrix,
   quatNormalize,
@@ -1089,7 +1090,7 @@ export const mat4LookAt = <
   const forwardY = point_target_from[1] - point_eye_from[1];
   const forwardZ = point_target_from[2] - point_eye_from[2];
   const forwardLength = Math.hypot(forwardX, forwardY, forwardZ);
-  if (!(forwardLength > 0)) {
+  if (!isFiniteAndAbove(forwardLength, 0)) {
     throw new Error('LookAt requires eye and target to be distinct');
   }
 
@@ -1098,7 +1099,7 @@ export const mat4LookAt = <
   const dir_forward_z = forwardZ / forwardLength;
 
   const upLength = Math.hypot(dir_up_from[0], dir_up_from[1], dir_up_from[2]);
-  if (!(upLength > 0)) {
+  if (!isFiniteAndAbove(upLength, 0)) {
     throw new Error('LookAt requires a non-zero up direction');
   }
   const upX = dir_up_from[0] / upLength;
@@ -1109,7 +1110,7 @@ export const mat4LookAt = <
   const rightY = dir_forward_z * upX - dir_forward_x * upZ;
   const rightZ = dir_forward_x * upY - dir_forward_y * upX;
   const rightLength = Math.hypot(rightX, rightY, rightZ);
-  if (!(rightLength > 0)) {
+  if (!isFiniteAndAbove(rightLength, 0)) {
     throw new Error('LookAt up direction cannot be parallel to forward');
   }
 
@@ -1358,8 +1359,8 @@ const assertRigidTransform = (
 
   const hasFiniteNorms = Number.isFinite(norm0) &&
     Number.isFinite(norm1) &&
-    Number.isFinite(norm2) &&
-    Number.isFinite(tx) &&
+    Number.isFinite(norm2);
+  const hasFiniteTranslation = Number.isFinite(tx) &&
     Number.isFinite(ty) &&
     Number.isFinite(tz);
   const hasUnitLengthColumns = isApproximately(norm0, 1, epsilon) &&
@@ -1374,6 +1375,7 @@ const assertRigidTransform = (
     isApproximately(value[11]!, 0, epsilon) &&
     isApproximately(value[15]!, 1, epsilon);
   const isRigid = hasFiniteNorms &&
+    hasFiniteTranslation &&
     hasUnitLengthColumns &&
     hasOrthogonalColumns &&
     isOrientationPreserving &&
@@ -1589,19 +1591,33 @@ export const normalMatrixFromMat4 = <
 
   const determinant = a * co00 + b * co10 + c * co20;
 
-  // Compare the determinant against the largest column length cubed (the
-  // determinant magnitude a well-conditioned matrix with that length scale
-  // would have) rather than a fixed absolute epsilon. This keeps the check
-  // scale-invariant: a uniformly tiny but well-conditioned matrix (e.g. a
-  // millimeter-scale transform) is not rejected, while an axis collapsed
-  // relative to the others is still caught as too singular/ill-conditioned
-  // to invert-transpose meaningfully.
-  const lenCol0 = Math.hypot(a, d, g);
-  const lenCol1 = Math.hypot(b, e, h);
-  const lenCol2 = Math.hypot(c, f, i);
-  const maxColLength = Math.max(lenCol0, lenCol1, lenCol2);
+  // Two scale-invariant checks, both expressed in squared terms so the
+  // relativeEpsilon ratio can be compared without sqrt/hypot calls on this
+  // hot path (squaring both sides of a ratio comparison preserves it, since
+  // all quantities involved are non-negative):
+  //
+  // 1. minColLength / maxColLength > relativeEpsilon — no column may have
+  //    collapsed relative to the largest column (catches axis collapse,
+  //    e.g. one scale factor near zero while the others stay normal).
+  //    Comparing min/max column length keeps this invariant to overall
+  //    matrix scale, so a uniformly tiny but well-conditioned matrix (e.g.
+  //    a millimeter-scale transform) is not rejected.
+  // 2. |determinant| / (lenCol0 * lenCol1 * lenCol2) > relativeEpsilon — the
+  //    determinant may not be negligible relative to the product of column
+  //    lengths (catches near-parallel/sheared columns, which can be
+  //    singular even when no individual column is short).
+  const lenSq0 = a * a + d * d + g * g;
+  const lenSq1 = b * b + e * e + h * h;
+  const lenSq2 = c * c + f * f + i * i;
+  const maxLenSq = Math.max(lenSq0, lenSq1, lenSq2);
+  const minLenSq = Math.min(lenSq0, lenSq1, lenSq2);
   const relativeEpsilon = 1e-10;
-  if (!(Math.abs(determinant) > relativeEpsilon * maxColLength ** 3)) {
+  const relativeEpsilonSq = relativeEpsilon * relativeEpsilon;
+
+  const hasCollapsedAxis = !(minLenSq > relativeEpsilonSq * maxLenSq);
+  const hasNegligibleDeterminant =
+    !(determinant * determinant > relativeEpsilonSq * lenSq0 * lenSq1 * lenSq2);
+  if (hasCollapsedAxis || hasNegligibleDeterminant) {
     throw new Error('Cannot build a normal matrix from a singular transform');
   }
 

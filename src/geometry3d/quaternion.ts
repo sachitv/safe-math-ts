@@ -7,9 +7,9 @@ import type {
   Mat4,
   Quaternion,
 } from './types.ts';
+import { isFiniteAndAbove, NEAR_ZERO } from './numeric.ts';
 import { normalizeVec3, normalizeVec3Unsafe } from './vector3.ts';
 
-const NEAR_ZERO = 1e-14;
 const ROTATION_MATRIX_TOLERANCE = 1e-8;
 
 type DistinctFramePair<ToFrame extends string, FromFrame extends string> =
@@ -187,7 +187,7 @@ export const quatNormalize = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): Quaternion<ToFrame, FromFrame> => {
   const norm = quatNorm(value);
-  if (!Number.isFinite(norm) || norm <= NEAR_ZERO) {
+  if (!isFiniteAndAbove(norm, NEAR_ZERO)) {
     throw new Error('Cannot normalize a zero-length quaternion');
   }
 
@@ -232,7 +232,7 @@ export const quatInverse = <ToFrame extends string, FromFrame extends string>(
   value: Quaternion<ToFrame, FromFrame>,
 ): Quaternion<FromFrame, ToFrame> => {
   const normSquared = quatNormSquared(value);
-  if (!Number.isFinite(normSquared) || normSquared <= NEAR_ZERO * NEAR_ZERO) {
+  if (!isFiniteAndAbove(normSquared, NEAR_ZERO * NEAR_ZERO)) {
     throw new Error('Cannot invert a zero-length quaternion');
   }
 
