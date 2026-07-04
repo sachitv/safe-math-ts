@@ -6,7 +6,12 @@ import {
   type UnitExpr,
   type UnitTag,
 } from '../units.ts';
-import { isFiniteAndAbove } from './numeric.ts';
+import {
+  isApproximately,
+  isFiniteAndAbove,
+  lengthSquared3,
+  RELATIVE_EPSILON_SQ,
+} from './numeric.ts';
 import {
   quatFromRotationMatrix,
   quatNormalize,
@@ -1304,20 +1309,6 @@ export function composeMat4<
 }
 
 /**
- * Checks whether two scalar values are within epsilon tolerance.
- *
- * @param actual Computed value.
- * @param expected Reference value.
- * @param epsilon Absolute tolerance.
- * @returns `true` when values are close enough.
- */
-const isApproximately = (
-  actual: number,
-  expected: number,
-  epsilon: number,
-): boolean => Math.abs(actual - expected) <= epsilon;
-
-/**
  * Validates that a matrix represents a rigid transform.
  *
  * @param value Raw matrix values.
@@ -1342,9 +1333,9 @@ const assertRigidTransform = (
   const ty = value[13]!;
   const tz = value[14]!;
 
-  const norm0 = col0x * col0x + col0y * col0y + col0z * col0z;
-  const norm1 = col1x * col1x + col1y * col1y + col1z * col1z;
-  const norm2 = col2x * col2x + col2y * col2y + col2z * col2z;
+  const norm0 = lengthSquared3(col0x, col0y, col0z);
+  const norm1 = lengthSquared3(col1x, col1y, col1z);
+  const norm2 = lengthSquared3(col2x, col2y, col2z);
 
   const dot01 = col0x * col1x + col0y * col1y + col0z * col1z;
   const dot02 = col0x * col2x + col0y * col2y + col0z * col2z;
@@ -1585,10 +1576,16 @@ export const normalMatrixFromMat4 = <
   const h = value[6];
   const i = value[10];
 
+  // normalMatrixFromMat4Unsafe recomputes the cofactors/determinant from the
+  // raw (unscaled) entries below, so this guards the actual computation it
+  // will perform: past roughly 1e103 in magnitude, the degree-3 determinant
+  // overflows to Infinity even though the individual entries are still
+  // representable, and dividing by an infinite determinant silently produces
+  // 0/NaN instead of throwing. Checking finiteness here on the same
+  // raw-value formula Unsafe uses catches that before it can happen.
   const co00 = e * i - f * h;
   const co10 = f * g - d * i;
   const co20 = d * h - e * g;
-
   const determinant = a * co00 + b * co10 + c * co20;
 
   // Two scale-invariant checks, both expressed in squared terms so the
@@ -1606,17 +1603,54 @@ export const normalMatrixFromMat4 = <
   //    determinant may not be negligible relative to the product of column
   //    lengths (catches near-parallel/sheared columns, which can be
   //    singular even when no individual column is short).
-  const lenSq0 = a * a + d * d + g * g;
-  const lenSq1 = b * b + e * e + h * h;
-  const lenSq2 = c * c + f * f + i * i;
+  //
+  // Both ratios are scale-invariant, so the linear part is normalized by its
+  // largest-magnitude entry before squaring: computing lenCol/determinant
+  // directly from very large entries would square or cube past
+  // Number.MAX_VALUE and overflow to Infinity before the ratio is ever
+  // compared, incorrectly flagging a well-conditioned matrix as singular.
+  const maxAbsEntry = Math.max(
+    Math.abs(a),
+    Math.abs(b),
+    Math.abs(c),
+    Math.abs(d),
+    Math.abs(e),
+    Math.abs(f),
+    Math.abs(g),
+    Math.abs(h),
+    Math.abs(i),
+  );
+  if (!(maxAbsEntry > 0) || !Number.isFinite(determinant)) {
+    throw new Error('Cannot build a normal matrix from a singular transform');
+  }
+
+  const invMaxAbsEntry = 1 / maxAbsEntry;
+  const sa = a * invMaxAbsEntry;
+  const sb = b * invMaxAbsEntry;
+  const sc = c * invMaxAbsEntry;
+  const sd = d * invMaxAbsEntry;
+  const se = e * invMaxAbsEntry;
+  const sf = f * invMaxAbsEntry;
+  const sg = g * invMaxAbsEntry;
+  const sh = h * invMaxAbsEntry;
+  const si = i * invMaxAbsEntry;
+
+  const sco00 = se * si - sf * sh;
+  const sco10 = sf * sg - sd * si;
+  const sco20 = sd * sh - se * sg;
+  const scaledDeterminant = sa * sco00 + sb * sco10 + sc * sco20;
+
+  const lenSq0 = lengthSquared3(sa, sd, sg);
+  const lenSq1 = lengthSquared3(sb, se, sh);
+  const lenSq2 = lengthSquared3(sc, sf, si);
   const maxLenSq = Math.max(lenSq0, lenSq1, lenSq2);
   const minLenSq = Math.min(lenSq0, lenSq1, lenSq2);
-  const relativeEpsilon = 1e-10;
-  const relativeEpsilonSq = relativeEpsilon * relativeEpsilon;
 
-  const hasCollapsedAxis = !(minLenSq > relativeEpsilonSq * maxLenSq);
-  const hasNegligibleDeterminant =
-    !(determinant * determinant > relativeEpsilonSq * lenSq0 * lenSq1 * lenSq2);
+  const hasCollapsedAxis = !(minLenSq > RELATIVE_EPSILON_SQ * maxLenSq);
+  const hasNegligibleDeterminant = !(
+    scaledDeterminant * scaledDeterminant >
+      RELATIVE_EPSILON_SQ * lenSq0 * lenSq1 * lenSq2
+  );
   if (hasCollapsedAxis || hasNegligibleDeterminant) {
     throw new Error('Cannot build a normal matrix from a singular transform');
   }

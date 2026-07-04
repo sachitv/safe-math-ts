@@ -7,7 +7,12 @@ import type {
   Mat4,
   Quaternion,
 } from './types.ts';
-import { isFiniteAndAbove, NEAR_ZERO } from './numeric.ts';
+import {
+  isApproximately,
+  isFiniteAndAbove,
+  lengthSquared3,
+  NEAR_ZERO,
+} from './numeric.ts';
 import { normalizeVec3, normalizeVec3Unsafe } from './vector3.ts';
 
 const ROTATION_MATRIX_TOLERANCE = 1e-8;
@@ -400,9 +405,6 @@ export function rotateVec3ByQuat<
   );
 }
 
-const isNear = (a: number, b: number, tolerance: number): boolean =>
-  Math.abs(a - b) <= tolerance;
-
 const dot3 = (
   ax: number,
   ay: number,
@@ -411,9 +413,6 @@ const dot3 = (
   by: number,
   bz: number,
 ): number => ax * bx + ay * by + az * bz;
-
-const lengthSquared3 = (x: number, y: number, z: number): number =>
-  dot3(x, y, z, x, y, z);
 
 const det3 = (
   m00: number,
@@ -465,13 +464,13 @@ const assertValidRotationBasis = (
   );
 
   if (
-    !isNear(col0LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
-    !isNear(col1LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
-    !isNear(col2LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    !isApproximately(col0LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    !isApproximately(col1LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
+    !isApproximately(col2LengthSquared, 1, ROTATION_MATRIX_TOLERANCE) ||
     Math.abs(col01Dot) > ROTATION_MATRIX_TOLERANCE ||
     Math.abs(col02Dot) > ROTATION_MATRIX_TOLERANCE ||
     Math.abs(col12Dot) > ROTATION_MATRIX_TOLERANCE ||
-    !isNear(determinant, 1, ROTATION_MATRIX_TOLERANCE)
+    !isApproximately(determinant, 1, ROTATION_MATRIX_TOLERANCE)
   ) {
     throw new Error('Input matrix is not a valid rotation matrix');
   }

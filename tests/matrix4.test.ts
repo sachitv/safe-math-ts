@@ -1005,6 +1005,60 @@ Deno.test('normalMatrixFromMat4 accepts an anisotropic matrix with no collapsed 
   assertAlmostEquals(delta_normalized_world[2], 0, 1e-12);
 });
 
+Deno.test('normalMatrixFromMat4 accepts a large uniform scale without overflowing the conditioning check', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  // All three axes share a large but equal scale (well-conditioned). Squaring
+  // the raw entries directly (1e90 ** 2 = 1e180) would overflow the
+  // conditioning check's squared-ratio comparison to Infinity even though
+  // the matrix is perfectly invertible in this range, so this guards
+  // against that false-rejection regression.
+  const pose_large_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e90,
+    1e90,
+    1e90,
+  );
+  const pose_normal_world = normalMatrixFromMat4(pose_large_world);
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_normalized_world = transformDirection3(
+    pose_normal_world,
+    delta_x_world,
+  );
+  assertAlmostEquals(delta_normalized_world[0], 1e-90, 1e-102);
+  assertAlmostEquals(delta_normalized_world[1], 0, 1e-102);
+  assertAlmostEquals(delta_normalized_world[2], 0, 1e-102);
+});
+
+Deno.test('normalMatrixFromMat4 rejects a uniform scale too extreme for the determinant to remain finite', () => {
+  const frame_world = frame('world');
+
+  // At this magnitude the raw (unscaled) determinant that
+  // normalMatrixFromMat4Unsafe would compute overflows past
+  // Number.MAX_VALUE to Infinity, so dividing by it would silently return
+  // 0/NaN instead of the true inverse-scale. Must throw rather than let
+  // that through.
+  const pose_too_extreme_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e150,
+    1e150,
+    1e150,
+  );
+  assertThrows(
+    () => normalMatrixFromMat4(pose_too_extreme_world),
+    Error,
+    'Cannot build a normal matrix from a singular transform',
+  );
+});
+
 Deno.test('mat4Ortho maps corners to NDC ±1', () => {
   const frame_ndc = frame('ndc');
   const frame_view = frame('view');
