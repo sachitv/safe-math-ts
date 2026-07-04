@@ -21,6 +21,8 @@ import {
   mat4Ortho,
   mat4Perspective,
   mat4PerspectiveUnsafe,
+  mat4Quat,
+  mat4Translation,
   mat4Unsafe,
   normalMatrixFromMat4,
   normalMatrixFromMat4Unsafe,
@@ -207,7 +209,7 @@ Deno.test('rotation matrix from quaternion rotates vectors', () => {
   assertAlmostEquals(delta_rotated_world[2], 0, 1e-12);
 });
 
-Deno.test('mat4 exposes translation() and quat() helpers', () => {
+Deno.test('mat4Translation() and mat4Quat() extract translation and rotation', () => {
   const frame_world = frame('world');
   const meter = unit('m');
 
@@ -236,7 +238,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     delta_offset_world,
   );
 
-  const extracted_translation_world = pose_rigid_world.translation();
+  const extracted_translation_world = mat4Translation(pose_rigid_world);
   assertAlmostEquals(
     extracted_translation_world[0],
     delta_offset_world[0],
@@ -253,7 +255,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     1e-12,
   );
 
-  const extracted_quat_world = pose_rigid_world.quat();
+  const extracted_quat_world = mat4Quat(pose_rigid_world);
   const pose_roundtrip_world = mat4FromQuaternion(
     frame_world,
     frame_world,
@@ -272,7 +274,7 @@ Deno.test('mat4 exposes translation() and quat() helpers', () => {
     1,
   );
   assertThrows(
-    () => scale_world.quat(),
+    () => mat4Quat(scale_world),
     Error,
     'Input matrix is not a valid rotation matrix',
   );
@@ -398,6 +400,25 @@ Deno.test('invertRigidMat4 rejects non-rigid matrices', () => {
   );
   assertThrows(
     () => invertRigidMat4(pose_nonrigid_world),
+    Error,
+    'Matrix is not a rigid transform',
+  );
+});
+
+Deno.test('invertRigidMat4 rejects reflection matrices', () => {
+  const frame_world = frame('world');
+  // Orthonormal columns (unit length, mutually perpendicular) but
+  // determinant -1: a mirror flip, not a rigid (orientation-preserving)
+  // transform.
+  const pose_reflection_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    -1,
+    1,
+    1,
+  );
+  assertThrows(
+    () => invertRigidMat4(pose_reflection_world),
     Error,
     'Matrix is not a rigid transform',
   );
@@ -908,7 +929,8 @@ Deno.test('transformPoint3 vs transformDirection3 translation sensitivity', () =
 Deno.test('normalMatrixFromMat4 rejects near-singular matrix', () => {
   const frame_world = frame('world');
 
-  // det ≈ 1e-11 < 1e-10 threshold → should throw.
+  // y-axis collapsed to 1e-11 relative to the other unit-length axes →
+  // should throw.
   const pose_near_singular_world = mat4FromScale(
     frame_world,
     dimensionlessUnit,
@@ -918,6 +940,120 @@ Deno.test('normalMatrixFromMat4 rejects near-singular matrix', () => {
   );
   assertThrows(
     () => normalMatrixFromMat4(pose_near_singular_world),
+    Error,
+    'Cannot build a normal matrix from a singular transform',
+  );
+});
+
+Deno.test('normalMatrixFromMat4 accepts a uniformly tiny but well-conditioned matrix', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  // All three axes share the same small scale, so the matrix is not
+  // singular even though its determinant (1e-12) is far below a fixed
+  // absolute epsilon.
+  const pose_tiny_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e-4,
+    1e-4,
+    1e-4,
+  );
+  const pose_normal_world = normalMatrixFromMat4(pose_tiny_world);
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_normalized_world = transformDirection3(
+    pose_normal_world,
+    delta_x_world,
+  );
+  assertAlmostEquals(delta_normalized_world[0], 1e4, 1e-8);
+  assertAlmostEquals(delta_normalized_world[1], 0, 1e-12);
+  assertAlmostEquals(delta_normalized_world[2], 0, 1e-12);
+});
+
+Deno.test('normalMatrixFromMat4 accepts an anisotropic matrix with no collapsed axis', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  // One axis is scaled up by 1e6 while the other two stay at unit scale;
+  // nothing has collapsed, so this must not be rejected as singular even
+  // though it is far from uniform.
+  const pose_stretched_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e6,
+    1,
+    1,
+  );
+  const pose_normal_world = normalMatrixFromMat4(pose_stretched_world);
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_normalized_world = transformDirection3(
+    pose_normal_world,
+    delta_x_world,
+  );
+  assertAlmostEquals(delta_normalized_world[0], 1e-6, 1e-18);
+  assertAlmostEquals(delta_normalized_world[1], 0, 1e-12);
+  assertAlmostEquals(delta_normalized_world[2], 0, 1e-12);
+});
+
+Deno.test('normalMatrixFromMat4 accepts a large uniform scale without overflowing the conditioning check', () => {
+  const frame_world = frame('world');
+  const meter = unit('m');
+
+  // All three axes share a large but equal scale (well-conditioned). Squaring
+  // the raw entries directly (1e90 ** 2 = 1e180) would overflow the
+  // conditioning check's squared-ratio comparison to Infinity even though
+  // the matrix is perfectly invertible in this range, so this guards
+  // against that false-rejection regression.
+  const pose_large_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e90,
+    1e90,
+    1e90,
+  );
+  const pose_normal_world = normalMatrixFromMat4(pose_large_world);
+  const delta_x_world = delta3(
+    frame_world,
+    quantity(meter, 1),
+    quantity(meter, 0),
+    quantity(meter, 0),
+  );
+  const delta_normalized_world = transformDirection3(
+    pose_normal_world,
+    delta_x_world,
+  );
+  assertAlmostEquals(delta_normalized_world[0], 1e-90, 1e-102);
+  assertAlmostEquals(delta_normalized_world[1], 0, 1e-102);
+  assertAlmostEquals(delta_normalized_world[2], 0, 1e-102);
+});
+
+Deno.test('normalMatrixFromMat4 rejects a uniform scale too extreme for the determinant to remain finite', () => {
+  const frame_world = frame('world');
+
+  // At this magnitude the raw (unscaled) determinant that
+  // normalMatrixFromMat4Unsafe would compute overflows past
+  // Number.MAX_VALUE to Infinity, so dividing by it would silently return
+  // 0/NaN instead of the true inverse-scale. Must throw rather than let
+  // that through.
+  const pose_too_extreme_world = mat4FromScale(
+    frame_world,
+    dimensionlessUnit,
+    1e150,
+    1e150,
+    1e150,
+  );
+  assertThrows(
+    () => normalMatrixFromMat4(pose_too_extreme_world),
     Error,
     'Cannot build a normal matrix from a singular transform',
   );

@@ -10,12 +10,15 @@ import {
   mat4,
   mat4FromQuaternion,
   mat4FromTranslation,
+  mat4Quat,
+  mat4Translation,
   mul,
   point3,
   quantity,
   quat,
   quatFromAxisAngle,
   quatFromRotationMatrix,
+  quatX,
   rotateVec3ByQuat,
   sqrt,
   subPoint3,
@@ -165,7 +168,7 @@ subPoint3(point_world, point_other_world);
 
 const quat_identity_body_world = quat(frame_body, frame_world, 0, 0, 0, 1);
 rotateVec3ByQuat(quat_identity_body_world, delta_world);
-const quat_component_x: number = quat_identity_body_world.x;
+const quat_component_x: number = quatX(quat_identity_body_world);
 void quat_component_x;
 
 // The `if (false)` blocks below let TypeScript type-check the enclosed code
@@ -175,8 +178,8 @@ void quat_component_x;
 // statements like the other @ts-expect-error checks in this file.
 // deno-lint-ignore no-constant-condition
 if (false) {
-  // @ts-expect-error quaternion component accessors are readonly
-  quat_identity_body_world.x = 1;
+  // @ts-expect-error quaternion components are a readonly tuple
+  quat_identity_body_world[0] = 1;
 }
 
 // deno-lint-ignore no-constant-condition
@@ -190,7 +193,7 @@ rotateVec3ByQuat(quat_identity_body_world, delta_body);
 
 const pose_world_world = mat4FromTranslation(frame_world, delta_world);
 transformPoint3(pose_world_world, point_world);
-const delta_from_pose_world = pose_world_world.translation();
+const delta_from_pose_world = mat4Translation(pose_world_world);
 addVec3(delta_from_pose_world, delta_world);
 
 // @ts-expect-error transformPoint3 requires matrix-first argument order
@@ -271,7 +274,7 @@ const pose_world_world_rot = mat4FromQuaternion(
   dimensionlessUnit,
   quatFromAxisAngle(frame_world, dir_axisz_world, Math.PI / 2),
 );
-const quat_from_pose_world_world = pose_world_world_rot.quat();
+const quat_from_pose_world_world = mat4Quat(pose_world_world_rot);
 rotateVec3ByQuat(quat_from_pose_world_world, delta_world);
 const quat_world_world_from_rot = quatFromRotationMatrix(
   frame_world,

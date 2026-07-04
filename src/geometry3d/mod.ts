@@ -8,6 +8,7 @@ export type {
   Point3,
   ProjectionMat4,
   Quaternion,
+  Vec3Base,
 } from './types.ts';
 
 export {
@@ -90,6 +91,8 @@ export {
   mat4OrthoUnsafe,
   mat4Perspective,
   mat4PerspectiveUnsafe,
+  mat4Quat,
+  mat4Translation,
   mat4Unsafe,
   normalMatrixFromMat4,
   normalMatrixFromMat4Unsafe,

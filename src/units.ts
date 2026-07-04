@@ -148,11 +148,11 @@ export type ParseFactor<Factor extends string> = string extends Factor
           readonly [Token in Base]: UnitExponent<RepeatCount<Exponent>, []>;
         }
       >
-    : UnitParts<
-      {
-        readonly [Token in Factor]: UnitExponent<[unknown], []>;
-      }
-    >
+      // Malformed exponent (negative/decimal/exponential, e.g. `m^-2`): fall
+      // back to `UnknownUnit` like the other unparseable-token branches above,
+      // instead of minting a per-literal opaque token that never cancels
+      // against the base unit it was meant to describe.
+    : UnknownUnit
   : UnitParts<
     {
       readonly [Token in Factor]: UnitExponent<[unknown], []>;
@@ -485,7 +485,7 @@ export const clamp = <Unit extends UnitExpr>(
   minValue: Quantity<NoInfer<Unit>>,
   maxValue: Quantity<NoInfer<Unit>>,
 ): Quantity<Unit> => {
-  if (minValue > maxValue) {
+  if (!(minValue <= maxValue)) {
     throw new Error('minValue must be <= maxValue');
   }
 
