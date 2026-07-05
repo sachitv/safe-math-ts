@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Run tests in deno-only devcontainer
         uses: devcontainers/ci@v0.3.1900000449
         with:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
       - name: Create placeholder credential paths for devcontainer mounts
         run: |
           mkdir -p $HOME/.config/opencode
