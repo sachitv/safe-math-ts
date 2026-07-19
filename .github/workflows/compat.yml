@@ -42,7 +42,7 @@ jobs:
       actions: read # download-artifact
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - uses: oven-sh/setup-bun@v2.2.0
@@ -67,7 +67,7 @@ jobs:
       actions: read # download-artifact
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Download npm build
@@ -90,7 +90,7 @@ jobs:
       actions: read # download-artifact
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Download npm build
@@ -113,7 +113,7 @@ jobs:
       actions: read # download-artifact
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-node@v6.2.0
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Download npm build
